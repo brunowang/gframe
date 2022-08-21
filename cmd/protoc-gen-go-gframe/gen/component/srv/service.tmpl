@@ -1,0 +1,13 @@
+type {{.SvcName}}Service interface {
+{{range .Handlers}}
+{{if and (not .IsStreamingClient) (not .IsStreamingServer)}}
+	{{.Method}}(ctx context.Context, req *dto.{{.Request}}) (*dto.{{.Response}}, error)
+{{else if and (not .IsStreamingClient) (.IsStreamingServer)}}
+	{{.Method}}(ctx context.Context, req *dto.{{.Request}}) (<-chan *dto.{{.Response}}, error)
+{{else if and (.IsStreamingClient) (not .IsStreamingServer)}}
+	{{.Method}}(ctx context.Context, reqCh <-chan *dto.{{.Request}}) (*dto.{{.Response}}, error)
+{{else}}
+	{{.Method}}(ctx context.Context, reqCh <-chan *dto.{{.Request}}) (<-chan *dto.{{.Response}}, error)
+{{end}}
+{{end}}
+}
