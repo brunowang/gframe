@@ -23,6 +23,7 @@ func main() {
 		gen.ComponentGoMod,
 		gen.ComponentParams,
 		gen.ComponentService,
+		gen.ComponentGrpcServer,
 		gen.ComponentGrpcHandler,
 	}
 

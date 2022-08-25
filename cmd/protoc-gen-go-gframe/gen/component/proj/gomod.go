@@ -40,6 +40,7 @@ func (a *GoMod) Generate(config helper.GenerateConfig) {
 		g.P("\t" + pbGoDir + " latest")
 		g.P("\tgithub.com/brunowang/gframe latest")
 		g.P("\tgithub.com/golang/protobuf v1.5.2")
+		g.P("\tgithub.com/grpc-ecosystem/go-grpc-middleware v1.3.0")
 		g.P("\tgo.uber.org/zap v1.22.0")
 		g.P(")")
 		g.P("require (")
