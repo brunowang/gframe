@@ -34,7 +34,7 @@ func (a *GrpcHandler) Generate(config helper.GenerateConfig) {
 
 		for _, svc := range file.Services {
 			fpath := fmt.Sprintf("%s/%s/%s.go",
-				fdir, a.goPkg, strings.ToLower(svc.GoName))
+				fdir, a.goPkg, "grpchandler")
 			g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
 			g.P(fhead)
 			tmpl := GrpcHandlerTmpl{

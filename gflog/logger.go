@@ -49,7 +49,7 @@ func Error(ctx context.Context, msg string, fields ...zap.Field) {
 func fillTrace(ctx context.Context, str string) string {
 	var sb strings.Builder
 	sb.WriteString("[TRACE: ")
-	sb.WriteString(GetTraceId(ctx))
+	sb.WriteString(GetTraceID(ctx))
 	sb.WriteString("] ")
 	sb.WriteString(str)
 	return sb.String()

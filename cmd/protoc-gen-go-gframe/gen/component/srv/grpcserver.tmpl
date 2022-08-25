@@ -1,0 +1,31 @@
+type grpcServer struct {
+	h *grpcHandler
+}
+
+func NewGrpcServer(svc service.{{.SvcName}}Service) *grpcServer {
+	return &grpcServer{
+		h: NewGrpcHandler(svc),
+	}
+}
+
+func (s *grpcServer) Serve(ctx context.Context, grpcl net.Listener) error {
+	srv := grpc.NewServer(
+		grpc_middleware.WithUnaryServerChain(
+		    gflog.UnaryEntryInterceptor,
+		    gflog.UnaryTraceInterceptor,
+		),
+		grpc_middleware.WithStreamServerChain(
+		    gflog.StreamEntryInterceptor,
+		    gflog.StreamTraceInterceptor,
+		),
+		grpc.MaxRecvMsgSize(1<<30), grpc.MaxSendMsgSize(1<<30),
+	)
+
+	{{.ProjName}}.Register{{.SvcName}}Server(srv, s.h)
+
+	reflection.Register(srv)
+
+	gflog.Info(ctx, "grpc start listen", zap.String("address", grpcl.Addr().String()))
+
+	return srv.Serve(grpcl)
+}

@@ -13,6 +13,7 @@ const (
 	ComponentGoMod       = "go_mod"
 	ComponentParams      = "params"
 	ComponentService     = "service"
+	ComponentGrpcServer  = "grpc_server"
 	ComponentGrpcHandler = "grpc_handler"
 	ComponentGrpcSDK     = "grpc_sdk"
 )
@@ -21,6 +22,7 @@ func init() {
 	RegisterComponent(ComponentGoMod, new(proj.GoMod))
 	RegisterComponent(ComponentParams, new(dto.Params))
 	RegisterComponent(ComponentService, new(srv.Service))
+	RegisterComponent(ComponentGrpcServer, new(srv.GrpcServer))
 	RegisterComponent(ComponentGrpcHandler, new(srv.GrpcHandler))
 	RegisterComponent(ComponentGrpcSDK, new(sdk.GrpcSDK))
 }

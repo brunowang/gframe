@@ -3,8 +3,8 @@ type grpcHandler struct {
 	svc service.{{.SvcName}}Service
 }
 
-func NewGrpcHandler() *grpcHandler {
-	return &grpcHandler{}
+func NewGrpcHandler(svc service.{{.SvcName}}Service) *grpcHandler {
+	return &grpcHandler{svc: svc}
 }
 
 {{$proj := .ProjName}}
