@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-type GrpcServer struct {
+type Server struct {
 	plugin *protogen.Plugin
 	goPkg  string
 	name   string
 }
 
-func (a *GrpcServer) Setup(plugin *protogen.Plugin) {
+func (a *Server) Setup(plugin *protogen.Plugin) {
 	a.plugin = plugin
 	a.goPkg = "frontend"
-	a.name = "grpcserver"
+	a.name = "server"
 }
 
-func (a *GrpcServer) Generate(config helper.GenerateConfig) {
+func (a *Server) Generate(config helper.GenerateConfig) {
 	for _, file := range a.plugin.Files {
 		if !file.Generate {
 			continue
@@ -27,21 +27,17 @@ func (a *GrpcServer) Generate(config helper.GenerateConfig) {
 		importDomain := strings.Split(string(file.GoImportPath), "/")[0]
 		projName := string(file.GoPackageName)
 		fdir := fmt.Sprintf("%s/projects/%s", importDomain, projName)
-		fhead := helper.NewCodeHeader().Pkg(a.goPkg).
-			Import(string(file.GoImportPath)).
+		fhead := helper.NewCodeHeader().Pkg(a.goPkg).Import("fmt").
 			Import("net").Import("go.uber.org/zap").
 			Import("github.com/brunowang/gframe/gflog").
-			Import(fdir + "/service").Import("google.golang.org/grpc").
-			Import("github.com/grpc-ecosystem/go-grpc-middleware").
-			Import("google.golang.org/grpc/reflection")
+			Import(fdir + "/service").Import("github.com/soheilhy/cmux")
 
 		fpath := fmt.Sprintf("%s/%s/%s.go", fdir, a.goPkg, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
 		g.P(fhead)
 		for _, svc := range file.Services {
-			tmpl := GrpcServerTmpl{
-				ProjName: projName,
-				SvcName:  svc.GoName,
+			tmpl := ServerTmpl{
+				SvcName: svc.GoName,
 			}
 			g.P(tmpl.Render())
 		}
