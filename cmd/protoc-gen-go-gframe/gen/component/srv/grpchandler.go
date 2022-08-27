@@ -10,11 +10,13 @@ import (
 type GrpcHandler struct {
 	plugin *protogen.Plugin
 	goPkg  string
+	name   string
 }
 
 func (a *GrpcHandler) Setup(plugin *protogen.Plugin) {
 	a.plugin = plugin
 	a.goPkg = "frontend"
+	a.name = "grpchandler"
 }
 
 func (a *GrpcHandler) Generate(config helper.GenerateConfig) {
@@ -32,11 +34,10 @@ func (a *GrpcHandler) Generate(config helper.GenerateConfig) {
 			Import(fdir + "/service").Import("io").
 			Import("context").Import("time")
 
+		fpath := fmt.Sprintf("%s/%s/%s.go", fdir, a.goPkg, a.name)
+		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
+		g.P(fhead)
 		for _, svc := range file.Services {
-			fpath := fmt.Sprintf("%s/%s/%s.go",
-				fdir, a.goPkg, "grpchandler")
-			g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
-			g.P(fhead)
 			tmpl := GrpcHandlerTmpl{
 				ProjName:      projName,
 				ProjNameUpper: strings.ToUpper(projName),

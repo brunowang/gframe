@@ -11,11 +11,13 @@ import (
 type Params struct {
 	plugin *protogen.Plugin
 	goPkg  string
+	name   string
 }
 
 func (a *Params) Setup(plugin *protogen.Plugin) {
 	a.plugin = plugin
 	a.goPkg = "dto"
+	a.name = "params"
 }
 
 func (a *Params) Generate(config helper.GenerateConfig) {
@@ -30,7 +32,7 @@ func (a *Params) Generate(config helper.GenerateConfig) {
 
 		importDomain := strings.Split(string(file.GoImportPath), "/")[0]
 		fpath := fmt.Sprintf("%s/projects/%s/%s/%s.go",
-			importDomain, projName, a.goPkg, "params")
+			importDomain, projName, a.goPkg, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
 		g.P(fhead)
 		tmpl := ParamsTpl{

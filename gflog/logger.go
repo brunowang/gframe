@@ -46,7 +46,14 @@ func Error(ctx context.Context, msg string, fields ...zap.Field) {
 	logger.Error(fillTrace(ctx, msg), fields...)
 }
 
+func Fatal(ctx context.Context, msg string, fields ...zap.Field) {
+	logger.Fatal(fillTrace(ctx, msg), fields...)
+}
+
 func fillTrace(ctx context.Context, str string) string {
+	if ctx == nil {
+		return str
+	}
 	var sb strings.Builder
 	sb.WriteString("[TRACE: ")
 	sb.WriteString(GetTraceID(ctx))

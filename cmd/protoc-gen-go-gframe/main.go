@@ -21,8 +21,10 @@ func main() {
 
 	baseComponents := []string{
 		gen.ComponentGoMod,
+		gen.ComponentGoMain,
 		gen.ComponentParams,
 		gen.ComponentService,
+		gen.ComponentServer,
 		gen.ComponentGrpcServer,
 		gen.ComponentGrpcHandler,
 	}

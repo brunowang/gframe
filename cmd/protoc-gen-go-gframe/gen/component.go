@@ -11,8 +11,10 @@ import (
 
 const (
 	ComponentGoMod       = "go_mod"
+	ComponentGoMain      = "go_main"
 	ComponentParams      = "params"
 	ComponentService     = "service"
+	ComponentServer      = "server"
 	ComponentGrpcServer  = "grpc_server"
 	ComponentGrpcHandler = "grpc_handler"
 	ComponentGrpcSDK     = "grpc_sdk"
@@ -20,8 +22,10 @@ const (
 
 func init() {
 	RegisterComponent(ComponentGoMod, new(proj.GoMod))
+	RegisterComponent(ComponentGoMain, new(proj.GoMain))
 	RegisterComponent(ComponentParams, new(dto.Params))
 	RegisterComponent(ComponentService, new(srv.Service))
+	RegisterComponent(ComponentServer, new(srv.Server))
 	RegisterComponent(ComponentGrpcServer, new(srv.GrpcServer))
 	RegisterComponent(ComponentGrpcHandler, new(srv.GrpcHandler))
 	RegisterComponent(ComponentGrpcSDK, new(sdk.GrpcSDK))
