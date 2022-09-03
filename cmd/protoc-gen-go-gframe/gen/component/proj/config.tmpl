@@ -1,0 +1,25 @@
+var (
+    rootConf = &Root{}
+)
+
+type Root struct {
+    // TODO mapping to config file
+}
+
+func GetRoot() Root {
+    if rootConf == nil {
+        return Root{}
+    }
+    return *rootConf
+}
+
+func BindToml(fpath string) error {
+    r := Root{}
+	_, err := toml.DecodeFile(fpath, &r)
+	if err != nil {
+		return err
+	}
+	rootConf = &r
+	// TODO watch file modify event
+	return nil
+}
