@@ -12,6 +12,7 @@ import (
 const (
 	ComponentGoMod       = "go_mod"
 	ComponentGoMain      = "go_main"
+	ComponentConfig      = "config"
 	ComponentParams      = "params"
 	ComponentService     = "service"
 	ComponentServer      = "server"
@@ -23,6 +24,7 @@ const (
 func init() {
 	RegisterComponent(ComponentGoMod, new(proj.GoMod))
 	RegisterComponent(ComponentGoMain, new(proj.GoMain))
+	RegisterComponent(ComponentConfig, new(proj.Config))
 	RegisterComponent(ComponentParams, new(dto.Params))
 	RegisterComponent(ComponentService, new(srv.Service))
 	RegisterComponent(ComponentServer, new(srv.Server))

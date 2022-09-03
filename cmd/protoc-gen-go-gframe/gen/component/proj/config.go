@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-type GoMain struct {
+type Config struct {
 	plugin *protogen.Plugin
 	goPkg  string
 	name   string
 }
 
-func (a *GoMain) Setup(plugin *protogen.Plugin) {
+func (a *Config) Setup(plugin *protogen.Plugin) {
 	a.plugin = plugin
-	a.goPkg = "main"
-	a.name = "main"
+	a.goPkg = "conf"
+	a.name = "configure"
 }
 
-func (a *GoMain) Generate(config helper.GenerateConfig) {
+func (a *Config) Generate(config helper.GenerateConfig) {
 	for _, file := range a.plugin.Files {
 		if !file.Generate {
 			continue
@@ -28,19 +28,13 @@ func (a *GoMain) Generate(config helper.GenerateConfig) {
 		projName := string(file.GoPackageName)
 		fdir := fmt.Sprintf("%s/projects/%s", importDomain, projName)
 		fhead := helper.NewCodeHeader().Pkg(a.goPkg).
-			Import("gopkg.in/alecthomas/kingpin.v2").
-			Import("github.com/brunowang/gframe/gflog").
-			Import("os").Import("os/signal").
-			Import("syscall").Import("runtime").
-			Import(fdir + "/frontend").Import(fdir + "/conf")
+			Import("github.com/BurntSushi/toml")
 
-		fpath := fmt.Sprintf("%s/cmd/%s/%s.go", fdir, projName, a.name)
+		fpath := fmt.Sprintf("%s/%s/%s.go", fdir, a.goPkg, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
 		g.P(fhead)
 
-		tmpl := GoMainTmpl{
-			ProjName: projName,
-		}
+		tmpl := ConfigTmpl{}
 		g.P(tmpl.Render())
 	}
 }
