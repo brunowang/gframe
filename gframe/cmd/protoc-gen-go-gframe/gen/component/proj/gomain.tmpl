@@ -1,0 +1,20 @@
+var (
+	app    = kingpin.New("{{.ProjName}}", "{{.ProjName}} server")
+	config = app.Flag("config", "config file path").Required().String()
+)
+
+func main() {
+    kingpin.MustParse(app.Parse(os.Args[1:]))
+    runtime.GOMAXPROCS(runtime.NumCPU())
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+
+    if err := conf.BindToml(*config); err != nil {
+        gflog.Fatal(nil, "config bind toml failed", zap.Error(err))
+    }
+
+    go frontend.MustNewServer(":80").SetupGRPC().Run()
+
+	<-sigs
+}
