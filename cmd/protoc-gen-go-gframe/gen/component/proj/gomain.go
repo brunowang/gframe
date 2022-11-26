@@ -32,7 +32,8 @@ func (a *GoMain) Generate(config helper.GenerateConfig) {
 			Import("github.com/brunowang/gframe/gflog").
 			Import("os").Import("os/signal").
 			Import("syscall").Import("runtime").
-			Import(fdir + "/frontend").Import(fdir + "/conf")
+			Import(fdir + "/frontend").Import(fdir + "/conf").
+			Import("go.uber.org/zap")
 
 		fpath := fmt.Sprintf("%s/cmd/%s/%s.go", fdir, projName, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)

@@ -36,23 +36,40 @@ func (a *GrpcHandler) Generate(config helper.GenerateConfig) {
 
 		fpath := fmt.Sprintf("%s/%s/%s.go", fdir, a.goPkg, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
-		g.P(fhead)
-		for _, svc := range file.Services {
-			tmpl := GrpcHandlerTmpl{
-				ProjName:      projName,
-				ProjNameUpper: strings.ToUpper(projName),
-				SvcName:       svc.GoName,
+		fnMap := make(map[string]struct{})
+		if helper.Exists(fpath) {
+			var gosrc []byte
+			gosrc, fnMap = helper.ParseGoFile(fpath)
+			g.P(string(gosrc))
+		} else {
+			g.P(fhead)
+			for _, svc := range file.Services {
+				tmpl := GrpcHandlerTmpl{
+					ProjName: projName,
+					SvcName:  svc.GoName,
+				}
+				g.P(tmpl.Render())
 			}
+		}
+		for _, svc := range file.Services {
 			for _, method := range svc.Methods {
-				tmpl.Handlers = append(tmpl.Handlers, Handler{
+				if _, ok := fnMap[method.GoName]; ok {
+					continue
+				}
+				hand := Handler{
 					Method:            method.GoName,
 					Request:           helper.ToCamelCase(string(method.Input.Desc.Name())),
 					Response:          helper.ToCamelCase(string(method.Output.Desc.Name())),
 					IsStreamingClient: method.Desc.IsStreamingClient(),
 					IsStreamingServer: method.Desc.IsStreamingServer(),
-				})
+				}
+				tmpl := GrpcMethodTmpl{
+					Handler:  hand,
+					ProjName: projName,
+					SvcName:  svc.GoName,
+				}
+				g.P(tmpl.Render())
 			}
-			g.P(tmpl.Render())
 		}
 	}
 }

@@ -6,10 +6,8 @@ import (
 )
 
 type GrpcHandlerTmpl struct {
-	ProjName      string
-	ProjNameUpper string
-	SvcName       string
-	Handlers      []Handler
+	ProjName string
+	SvcName  string
 }
 
 //go:embed grpchandler.tmpl
