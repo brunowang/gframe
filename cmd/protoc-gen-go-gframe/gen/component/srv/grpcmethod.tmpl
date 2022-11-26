@@ -1,0 +1,155 @@
+{{$proj := .ProjName}}
+{{$svcName := .SvcName}}
+{{if and (not .IsStreamingClient) (not .IsStreamingServer)}}
+func (g *grpcHandler) {{.Method}}(ctx context.Context, req *{{$proj}}.{{.Request}}) (*{{$proj}}.{{.Response}}, error) {
+	params := &dto.{{.Request}}{}
+	params.Fill(req)
+
+	gflog.Info(ctx, "grpcHandler {{.Method}} processing")
+	nowt := time.Now()
+
+	result, err := g.svc.{{.Method}}(ctx, params)
+	if err != nil {
+		gflog.Error(ctx, "grpcHandler {{.Method}} error", zap.Error(err))
+		return nil, err
+	}
+	gflog.Info(ctx, "grpcHandler logical processing finished", zap.Duration("latency", time.Since(nowt)))
+
+	return result.ToPb(), nil
+}
+{{else if and (not .IsStreamingClient) (.IsStreamingServer)}}
+func (g *grpcHandler) {{.Method}}(req *{{$proj}}.{{.Request}}, stream {{$proj}}.{{$svcName}}_{{.Method}}Server) error {
+	ctx := stream.Context()
+	params := &dto.{{.Request}}{}
+	params.Fill(req)
+
+	gflog.Info(ctx, "grpcHandler {{.Method}} processing")
+	nowt := time.Now()
+
+	resCh, err := g.svc.{{.Method}}(ctx, params)
+    if err != nil {
+		gflog.Error(ctx, "grpcHandler {{.Method}} error", zap.Error(err))
+		return err
+    }
+
+    var lastErr error
+sendLoop:
+	for {
+	    select {
+	    case <-ctx.Done():
+        	break sendLoop
+        case res, ok := <-resCh:
+        	if !ok {
+        		break sendLoop
+        	} else if res.Err != nil {
+                lastErr = res.Err
+                gflog.Error(ctx, "grpcHandler result error", zap.Error(res.Err))
+                break sendLoop
+            }
+        	if err := stream.Send(res.ToPb()); err != nil {
+        	    gflog.Error(ctx, "grpcHandler stream.Send error", zap.Error(err))
+        	    break sendLoop
+        	}
+	    }
+	}
+
+    gflog.Info(ctx, "grpcHandler sendLoop finished", zap.Duration("latency", time.Since(nowt)))
+	return lastErr
+}
+{{else if and (.IsStreamingClient) (not .IsStreamingServer)}}
+func (g *grpcHandler) {{.Method}}(stream {{$proj}}.{{$svcName}}_{{.Method}}Server) error {
+    ctx := stream.Context()
+    reqCh := make(chan *dto.{{.Request}}, 32)
+
+    gflog.Info(ctx, "grpcHandler {{.Method}} processing")
+    nowt := time.Now()
+
+    go func() {
+        defer close(reqCh)
+    recvLoop:
+        for {
+            req, err := stream.Recv()
+            if err == io.EOF {
+                break recvLoop
+            } else if err != nil {
+                gflog.Error(ctx, "grpcHandler stream.Recv error", zap.Error(err))
+                break recvLoop
+            }
+            params := &dto.{{.Request}}{}
+            params.Fill(req)
+            reqCh <- params
+        }
+
+        gflog.Info(ctx, "grpcHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
+    }()
+	result, err := g.svc.{{.Method}}(ctx, reqCh)
+	if err != nil {
+		gflog.Error(ctx, "grpcHandler {{.Method}} error", zap.Error(err))
+		return err
+	}
+	gflog.Info(ctx, "grpcHandler logical processing finished", zap.Duration("latency", time.Since(nowt)))
+
+	if err := stream.SendAndClose(result.ToPb()); err != nil {
+        gflog.Error(ctx, "grpcHandler stream.SendAndClose error", zap.Error(err))
+        return err
+	}
+	return nil
+}
+{{else}}
+func (g *grpcHandler) {{.Method}}(stream {{$proj}}.{{$svcName}}_{{.Method}}Server) error {
+	ctx := stream.Context()
+	reqCh := make(chan *dto.{{.Request}}, 32)
+
+	gflog.Info(ctx, "grpcHandler {{.Method}} processing")
+	nowt := time.Now()
+
+    go func() {
+        defer close(reqCh)
+    recvLoop:
+        for {
+            req, err := stream.Recv()
+            if err == io.EOF {
+                break recvLoop
+            } else if err != nil {
+                gflog.Error(ctx, "grpcHandler stream.Recv error", zap.Error(err))
+                break recvLoop
+            }
+            params := &dto.{{.Request}}{}
+            params.Fill(req)
+            reqCh <- params
+        }
+
+        gflog.Info(ctx, "grpcHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
+    }()
+
+	resCh, err := g.svc.{{.Method}}(ctx, reqCh)
+	if err != nil {
+		gflog.Error(ctx, "grpcHandler {{.Method}} error", zap.Error(err))
+		return err
+	}
+
+    var lastErr error
+sendLoop:
+	for {
+	    select {
+	    case <-ctx.Done():
+        	break sendLoop
+        case res, ok := <-resCh:
+        	if !ok {
+        		break sendLoop
+        	} else if res.Err != nil {
+        	    lastErr = res.Err
+        	    gflog.Error(ctx, "grpcHandler result error", zap.Error(res.Err))
+        	    break sendLoop
+        	}
+        	if err := stream.Send(res.ToPb()); err != nil {
+        	    gflog.Error(ctx, "grpcHandler stream.Send error", zap.Error(err))
+        	    break sendLoop
+        	}
+	    }
+	}
+
+    gflog.Info(ctx, "grpcHandler sendLoop finished", zap.Duration("latency", time.Since(nowt)))
+	return lastErr
+}
+{{end}}

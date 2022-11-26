@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/brunowang/gframe/cmd/protoc-gen-go-gframe/gen/helper"
 	"google.golang.org/protobuf/compiler/protogen"
-	"runtime"
 	"strings"
 )
 
@@ -34,7 +33,7 @@ func (a *GoMod) Generate(config helper.GenerateConfig) {
 
 		g.P("module " + fdir)
 		g.P()
-		g.P(strings.Replace(runtime.Version(), "go", "go ", 1))
+		g.P("go 1.18")
 		g.P()
 		g.P("require (")
 		g.P("\t" + pbGoDir + " latest")
