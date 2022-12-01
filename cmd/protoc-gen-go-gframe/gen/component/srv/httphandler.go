@@ -34,7 +34,7 @@ func (a *HttpHandler) Generate(config helper.GenerateConfig) {
 			Import("github.com/brunowang/gframe/gfhttp").
 			Import(fdir+"/service").Import("time").
 			ImportWithAlias("github.com/gorilla/websocket", "ws").
-			Import(fdir + "/conf").Import("net/http").
+			Import("net/http").
 			Import("sync").Import("encoding/json")
 
 		fpath := fmt.Sprintf("%s/%s/%s.go", fdir, a.goPkg, a.name)
