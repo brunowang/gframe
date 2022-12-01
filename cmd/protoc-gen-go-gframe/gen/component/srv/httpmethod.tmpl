@@ -37,7 +37,7 @@ func (s *httpHandler) {{.Method}}(ctx *gin.Context) {
 	gflog.Info(ctx, "httpHandler {{.Method}} processing")
 	nowt := time.Now()
 
-	rsp, err := s.srv.{{.Method}}(ctx, &req)
+	rsp, err := s.svc.{{.Method}}(ctx, &req)
 	if err != nil {
 	    gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
 		gfhttp.NewResp(ctx).Err(err)
@@ -60,7 +60,7 @@ func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
     gflog.Info(ctx, "httpHandler {{.Method}} processing")
     nowt := time.Now()
 
-    rspCh, err := s.srv.{{.Method}}(ctx, &req)
+    rspCh, err := s.svc.{{.Method}}(ctx, &req)
     if err != nil {
         gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
         lastErr = err
@@ -119,7 +119,7 @@ func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
 
         gflog.Info(ctx, "httpHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
     }()
-	rsp, err := s.srv.{{.Method}}(ctx, reqCh)
+	rsp, err := s.svc.{{.Method}}(ctx, reqCh)
 	if err != nil {
 		gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
 		lastErr = err
@@ -163,7 +163,7 @@ func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
         gflog.Info(ctx, "httpHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
     }()
 
-    rspCh, err := s.srv.{{.Method}}(ctx, reqCh)
+    rspCh, err := s.svc.{{.Method}}(ctx, reqCh)
     if err != nil {
         gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
         lastErr = err

@@ -31,7 +31,7 @@ func (a *HttpServer) Generate(config helper.GenerateConfig) {
 			Import("net").Import("go.uber.org/zap").
 			Import("github.com/gin-gonic/gin").
 			Import("github.com/brunowang/gframe/gflog").
-			Import(fdir + "/service").Import(fdir + "/conf")
+			Import(fdir + "/service")
 
 		fpath := fmt.Sprintf("%s/%s/%s.go", fdir, a.goPkg, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)

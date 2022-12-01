@@ -44,10 +44,8 @@ func (a *GoMod) Generate(config helper.GenerateConfig) {
 		g.P("\tgithub.com/grpc-ecosystem/go-grpc-middleware v1.3.0")
 		g.P("\tgithub.com/soheilhy/cmux v0.1.5")
 		g.P("\tgo.uber.org/zap v1.22.0")
+		g.P("\tgoogle.golang.org/grpc v1.49.0")
 		g.P("\tgopkg.in/alecthomas/kingpin.v2 v2.2.6")
-		g.P(")")
-		g.P("require (")
-		g.P("\tgoogle.golang.org/grpc v1.48.0 // indirect")
 		g.P(")")
 		break
 	}
