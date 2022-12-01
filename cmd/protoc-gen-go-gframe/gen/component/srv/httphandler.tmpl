@@ -1,0 +1,7 @@
+type httpHandler struct {
+	svc service.{{.SvcName}}Service
+}
+
+func NewHttpHandler(svc service.{{.SvcName}}Service) *httpHandler {
+	return &httpHandler{svc: svc}
+}

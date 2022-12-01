@@ -32,6 +32,13 @@ func (s *server) SetupGRPC() *server {
 	return s
 }
 
+func (s *server) SetupHTTP() *server {
+    httpSrv := NewHttpServer(s.svc)
+	httpl := s.m.Match(cmux.HTTP1Fast())
+	s.AddFrontend(httpSrv, httpl)
+	return s
+}
+
 func (s *server) AddFrontend(fe Frontend, l net.Listener) *server {
 	s.fes = append(s.fes, FeWrapper{fe: fe, ln: l})
 	return s

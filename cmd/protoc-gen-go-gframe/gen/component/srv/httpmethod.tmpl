@@ -1,0 +1,196 @@
+{{define "wsTpl"}}
+	upgrader := ws.Upgrader{
+		WriteBufferPool: &sync.Pool{},
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+	conn, err := upgrader.Upgrade(gctx.Writer, gctx.Request, nil)
+	if err != nil {
+	    gflog.Error(gctx, "httpHandler upgrade protocol to websocket error", zap.Error(err))
+		gfhttp.NewResp(gctx).Status(http.StatusBadRequest).Code(-1).Err(err)
+		return
+	}
+
+	gflog.Info(gctx, "httpHandler websocket connected")
+
+	ctx := gflog.GetCtxFromGin(gctx)
+
+	var lastErr error
+	defer func() {
+		if lastErr != nil {
+			conn.WriteControl(ws.CloseMessage, ws.FormatCloseMessage(ws.CloseInternalServerErr, lastErr.Error()), time.Now().Add(time.Second))
+			conn.Close()
+			gctx.Error(lastErr)
+		}
+		conn.WriteControl(ws.CloseMessage, ws.FormatCloseMessage(ws.CloseNormalClosure, "EOF"), time.Now().Add(2*time.Second))
+		conn.Close()
+	}()
+{{end}}
+{{if and (not .IsStreamingClient) (not .IsStreamingServer)}}
+func (s *httpHandler) {{.Method}}(ctx *gin.Context) {
+	var req dto.{{.Request}}
+	if !gfhttp.BindJson(ctx, &req) {
+		return
+	}
+
+	gflog.Info(ctx, "httpHandler {{.Method}} processing")
+	nowt := time.Now()
+
+	rsp, err := s.srv.{{.Method}}(ctx, &req)
+	if err != nil {
+	    gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
+		gfhttp.NewResp(ctx).Err(err)
+		return
+	}
+	gflog.Info(ctx, "httpHandler logical processing finished", zap.Duration("latency", time.Since(nowt)))
+
+	gfhttp.NewResp(ctx).OK(rsp.ToPb())
+}
+{{else if and (not .IsStreamingClient) (.IsStreamingServer)}}
+func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
+{{template "wsTpl"}}
+	var req dto.{{.Request}}
+    if err := conn.ReadJSON(&req); err != nil {
+        gflog.Error(ctx, "httpHandler conn.ReadJSON error", zap.Error(err))
+        lastErr = err
+        return
+    }
+
+    gflog.Info(ctx, "httpHandler {{.Method}} processing")
+    nowt := time.Now()
+
+    rspCh, err := s.srv.{{.Method}}(ctx, &req)
+    if err != nil {
+        gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
+        lastErr = err
+        return
+    }
+
+sendLoop:
+    for {
+        select {
+        case <-ctx.Done():
+            break sendLoop
+        case rsp, ok := <-rspCh:
+            if !ok {
+                break sendLoop
+        	} else if rsp.Err != nil {
+        	    gflog.Error(ctx, "httpHandler response error", zap.Error(rsp.Err))
+        	    lastErr = rsp.Err
+        	    break sendLoop
+        	}
+            if err := conn.WriteMessage(ws.TextMessage, rsp.ToJson()); err != nil {
+                gflog.Error(ctx, "httpHandler conn.WriteMessage error", zap.Error(err))
+                lastErr = err
+                break sendLoop
+            }
+        }
+    }
+
+    gflog.Info(ctx, "httpHandler sendLoop finished", zap.Duration("latency", time.Since(nowt)))
+}
+{{else if and (.IsStreamingClient) (not .IsStreamingServer)}}
+func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
+{{template "wsTpl"}}
+    reqCh := make(chan *dto.{{.Request}}, 32)
+
+    gflog.Info(ctx, "httpHandler {{.Method}} processing")
+    nowt := time.Now()
+
+    go func() {
+        defer close(reqCh)
+    recvLoop:
+        for {
+            var req dto.{{.Request}}
+            _, bs, err := conn.ReadMessage()
+            if err != nil {
+                gflog.Error(ctx, "httpHandler conn.ReadMessage error", zap.Error(err))
+                break recvLoop
+            } else if string(bs) == "EOF" {
+                break recvLoop
+            }
+			if err := json.Unmarshal(bs, &req); err != nil {
+				gflog.Error(ctx, "httpHandler json.Unmarshal error", zap.Error(err))
+				break recvLoop
+			}
+            reqCh <- &req
+        }
+
+        gflog.Info(ctx, "httpHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
+    }()
+	rsp, err := s.srv.{{.Method}}(ctx, reqCh)
+	if err != nil {
+		gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
+		lastErr = err
+		return
+	}
+	gflog.Info(ctx, "httpHandler logical processing finished", zap.Duration("latency", time.Since(nowt)))
+
+	if err := conn.WriteMessage(ws.TextMessage, rsp.ToJson()); err != nil {
+        gflog.Error(ctx, "httpHandler conn.WriteMessage error", zap.Error(err))
+        lastErr = err
+        return
+	}
+}
+{{else}}
+func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
+{{template "wsTpl"}}
+	reqCh := make(chan *dto.{{.Request}}, 32)
+
+	gflog.Info(ctx, "httpHandler {{.Method}} processing")
+	nowt := time.Now()
+
+    go func() {
+        defer close(reqCh)
+    recvLoop:
+        for {
+            var req dto.{{.Request}}
+            _, bs, err := conn.ReadMessage()
+            if err != nil {
+                gflog.Error(ctx, "httpHandler conn.ReadMessage error", zap.Error(err))
+                break recvLoop
+            } else if string(bs) == "EOF" {
+                break recvLoop
+            }
+			if err := json.Unmarshal(bs, &req); err != nil {
+				gflog.Error(ctx, "httpHandler json.Unmarshal error", zap.Error(err))
+				break recvLoop
+			}
+            reqCh <- &req
+        }
+
+        gflog.Info(ctx, "httpHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
+    }()
+
+    rspCh, err := s.srv.{{.Method}}(ctx, reqCh)
+    if err != nil {
+        gflog.Error(ctx, "httpHandler {{.Method}} error", zap.Error(err))
+        lastErr = err
+        return
+    }
+
+sendLoop:
+    for {
+        select {
+        case <-ctx.Done():
+            break sendLoop
+        case rsp, ok := <-rspCh:
+            if !ok {
+                break sendLoop
+        	} else if rsp.Err != nil {
+        	    gflog.Error(ctx, "httpHandler response error", zap.Error(rsp.Err))
+        	    lastErr = rsp.Err
+        	    break sendLoop
+        	}
+            if err := conn.WriteMessage(ws.TextMessage, rsp.ToJson()); err != nil {
+                gflog.Error(ctx, "httpHandler conn.WriteMessage error", zap.Error(err))
+                lastErr = err
+                break sendLoop
+            }
+        }
+    }
+
+    gflog.Info(ctx, "httpHandler sendLoop finished", zap.Duration("latency", time.Since(nowt)))
+}
+{{end}}

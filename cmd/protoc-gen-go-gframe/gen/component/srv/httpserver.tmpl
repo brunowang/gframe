@@ -1,0 +1,29 @@
+type httpServer struct {
+	h *httpHandler
+}
+
+func NewHttpServer(svc service.{{.SvcName}}Service) *httpServer {
+	return &httpServer{
+		h: NewHttpHandler(svc),
+	}
+}
+
+func (s *httpServer) Serve(httpl net.Listener) error {
+	gin.SetMode(gin.ReleaseMode)
+
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(gflog.TraceMiddleware())
+
+{{range .Handlers}}
+{{if and (not .IsStreamingClient) (not .IsStreamingServer)}}
+	router.POST({{.Path}}, s.h.{{.Method}})
+{{else}}
+    router.GET({{.Path}}, s.h.{{.Method}})
+{{end}}
+{{end}}
+
+	gflog.Info(nil, "Http start listen", zap.String("address", httpl.Addr().String()))
+
+	return router.RunListener(httpl)
+}
