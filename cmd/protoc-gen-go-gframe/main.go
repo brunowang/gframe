@@ -28,6 +28,8 @@ func main() {
 		gen.ComponentServer,
 		gen.ComponentGrpcServer,
 		gen.ComponentGrpcHandler,
+		gen.ComponentHttpServer,
+		gen.ComponentHttpHandler,
 	}
 
 	options.Run(func(plugin *protogen.Plugin) error {

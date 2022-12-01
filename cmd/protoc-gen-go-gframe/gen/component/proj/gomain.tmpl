@@ -14,7 +14,7 @@ func main() {
         gflog.Fatal(nil, "config bind toml failed", zap.Error(err))
     }
 
-    go frontend.MustNewServer(":80").SetupGRPC().Run()
+    go frontend.MustNewServer(":80").SetupGRPC().SetupHTTP().Run()
 
 	<-sigs
 }

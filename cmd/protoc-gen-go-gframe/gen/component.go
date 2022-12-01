@@ -19,6 +19,8 @@ const (
 	ComponentGrpcServer  = "grpc_server"
 	ComponentGrpcHandler = "grpc_handler"
 	ComponentGrpcSDK     = "grpc_sdk"
+	ComponentHttpServer  = "http_server"
+	ComponentHttpHandler = "http_handler"
 )
 
 func init() {
@@ -31,6 +33,8 @@ func init() {
 	RegisterComponent(ComponentGrpcServer, new(srv.GrpcServer))
 	RegisterComponent(ComponentGrpcHandler, new(srv.GrpcHandler))
 	RegisterComponent(ComponentGrpcSDK, new(sdk.GrpcSDK))
+	RegisterComponent(ComponentHttpServer, new(srv.HttpServer))
+	RegisterComponent(ComponentHttpHandler, new(srv.HttpHandler))
 }
 
 type Component interface {
