@@ -7,4 +7,4 @@ protoc-gen-go-gframe
   go install github.com/brunowang/gframe/cmd/protoc-gen-go-gframe@latest
   
 使用：
-  protoc -I ${include_proto_dir} --go-gframe_out=paths=source_relative,pbGoDir=${pbgen_go_dir}:./ ${proto_path}
+  protoc -I $include_proto_dir --go-gframe_out=paths=source_relative,pbGoDir=$pbgen_go_dir:./ $proto_path
