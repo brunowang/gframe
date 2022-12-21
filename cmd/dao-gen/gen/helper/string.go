@@ -54,3 +54,17 @@ func ToCamelCase(s string) string {
 	}
 	return n.String()
 }
+
+func Title(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+func UnTitle(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.ToLower(s[:1]) + s[1:]
+}

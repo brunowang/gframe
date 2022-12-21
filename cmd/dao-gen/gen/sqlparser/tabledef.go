@@ -2,8 +2,8 @@ package sqlparser
 
 import (
 	"fmt"
+	"github.com/brunowang/gframe/cmd/dao-gen/gen/helper"
 	"github.com/brunowang/gframe/cmd/dao-gen/gen/template"
-	"github.com/brunowang/gframe/cmd/protoc-gen-go-gframe/gen/helper"
 	"github.com/pingcap/tidb/parser"
 	"github.com/pingcap/tidb/parser/ast"
 	"github.com/pingcap/tidb/parser/test_driver"
@@ -17,7 +17,7 @@ type ColumnDef struct {
 }
 
 type IndexDef struct {
-	Type string
+	Uniq bool
 	Cols []string
 }
 
@@ -46,8 +46,16 @@ func (v *TableDef) Enter(in ast.Node) (ast.Node, bool) {
 		}
 		v.Cols = append(v.Cols, col)
 	case *ast.Constraint:
-		// TODO handle index
-		fmt.Printf("Constraint: %+v", node)
+		idx := IndexDef{}
+		if node.Tp == ast.ConstraintPrimaryKey || node.Tp == ast.ConstraintUniq ||
+			node.Tp == ast.ConstraintUniqKey || node.Tp == ast.ConstraintUniqIndex {
+			idx.Uniq = true
+		}
+		idx.Cols = make([]string, 0, len(node.Keys))
+		for _, key := range node.Keys {
+			idx.Cols = append(idx.Cols, key.Column.Name.O)
+		}
+		v.Idxs = append(v.Idxs, idx)
 	default:
 		v.allType[fmt.Sprintf("%+v", reflect.TypeOf(node))] = struct{}{}
 	}
@@ -78,6 +86,21 @@ func ParseTable(sql string) ([]*template.StructDefTmpl, error) {
 				Type:    col.Type,
 				ColName: col.Name,
 				Comment: col.Comment,
+			})
+		}
+		for _, idx := range tab.Idxs {
+			fields := make([]template.Field, 0, len(idx.Cols))
+			for _, col := range idx.Cols {
+				field, err := tpl.Fields.Find(helper.ToCamelCase(col))
+				if err != nil {
+					return nil, err
+				}
+				field.Name = helper.UnTitle(field.Name)
+				fields = append(fields, field)
+			}
+			tpl.Indexes = append(tpl.Indexes, template.Index{
+				Uniq: idx.Uniq,
+				Cols: fields,
 			})
 		}
 		tpls = append(tpls, tpl)
