@@ -35,3 +35,37 @@ func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64,
     }
     return res.LastInsertId()
 }
+{{$table := .}}
+{{range $i, $v := .Indexes}}
+func (d *{{$table.Name}}Dao) Select{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (*{{$table.Name}}, error) {
+    var one {{$table.Name}}
+    sql := "select * from {{$table.TabName}} where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}} limit 1"
+	if err := d.db.GetContext(ctx, &one, sql{{range .Cols}}, {{.Name}}{{end}}); err != nil {
+		return nil, err
+	}
+	return &one, nil
+}
+{{end}}
+{{range $i, $v := .Indexes}}
+func (d *{{$table.Name}}Dao) Update{{$table.Name}}{{$i}}(ctx context.Context, m {{$table.Name}}{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
+    cols := "{{range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}{{.ColName}}=?{{end}}"
+    args := []interface{}{ {{range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end}} }
+    args = append(args, []interface{}{ {{range $i, $v := .Cols}}{{if not (eq 0 $i)}}, {{end}}{{.Name}}{{end}} }...)
+    sql := fmt.Sprintf("update {{$table.TabName}} set %s where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}", cols)
+	res, err := d.db.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+{{end}}
+{{range $i, $v := .Indexes}}
+func (d *{{$table.Name}}Dao) Delete{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
+    sql := "delete from {{$table.TabName}} where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}"
+	res, err := d.db.ExecContext(ctx, sql{{range .Cols}}, {{.Name}}{{end}})
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+{{end}}
