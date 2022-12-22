@@ -10,7 +10,7 @@ import (
 
 type {{.Name}} struct {
     {{- range .Fields}}
-    {{.Name}} {{.Type}} `db:"{{.ColName}}"` // {{.Comment}}
+    {{.Name}} {{.Type}} `db:"{{.ColName}}"`{{if not (eq "" .Comment)}} // {{end}}{{.Comment}}
     {{- end}}
 }
 
@@ -25,18 +25,18 @@ func New{{.Name}}Dao(db *sqlx.DB) *{{.Name}}Dao {
 func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64, error) {
     cols := "{{range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}{{.ColName}}{{end}}"
     sql := fmt.Sprintf("insert into {{.TabName}}(%s) values({{range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}?{{end}})", cols)
-    args := []interface{}{ {{range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end}} }
+    args := []interface{}{ {{- range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end -}} }
     res, err := d.db.ExecContext(ctx, sql, args...)
     if err != nil {
         if e, ok := err.(*mysql.MySQLError); ok && e.Number == 1062 {
-            return 0, fmt.Errorf("DuplicateKey")
+            return 0, DuplicateKey
         }
         return 0, err
     }
     return res.LastInsertId()
 }
 {{$table := .}}
-{{range $i, $v := .Indexes}}
+{{range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Select{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (*{{$table.Name}}, error) {
     var one {{$table.Name}}
     sql := "select * from {{$table.TabName}} where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}} limit 1"
@@ -45,12 +45,12 @@ func (d *{{$table.Name}}Dao) Select{{$table.Name}}{{$i}}(ctx context.Context{{ra
 	}
 	return &one, nil
 }
-{{end}}
-{{range $i, $v := .Indexes}}
+{{end}}{{end}}
+{{range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Update{{$table.Name}}{{$i}}(ctx context.Context, m {{$table.Name}}{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
     cols := "{{range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}{{.ColName}}=?{{end}}"
-    args := []interface{}{ {{range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end}} }
-    args = append(args, []interface{}{ {{range $i, $v := .Cols}}{{if not (eq 0 $i)}}, {{end}}{{.Name}}{{end}} }...)
+    args := []interface{}{ {{- range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end -}} }
+    args = append(args, []interface{}{ {{- range $i, $v := .Cols}}{{if not (eq 0 $i)}}, {{end}}{{.Name}}{{end -}} }...)
     sql := fmt.Sprintf("update {{$table.TabName}} set %s where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}", cols)
 	res, err := d.db.ExecContext(ctx, sql, args...)
 	if err != nil {
@@ -58,8 +58,8 @@ func (d *{{$table.Name}}Dao) Update{{$table.Name}}{{$i}}(ctx context.Context, m 
 	}
 	return res.RowsAffected()
 }
-{{end}}
-{{range $i, $v := .Indexes}}
+{{end}}{{end}}
+{{range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Delete{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
     sql := "delete from {{$table.TabName}} where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}"
 	res, err := d.db.ExecContext(ctx, sql{{range .Cols}}, {{.Name}}{{end}})
@@ -68,4 +68,4 @@ func (d *{{$table.Name}}Dao) Delete{{$table.Name}}{{$i}}(ctx context.Context{{ra
 	}
 	return res.RowsAffected()
 }
-{{end}}
+{{end}}{{end}}

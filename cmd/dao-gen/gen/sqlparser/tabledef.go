@@ -2,12 +2,11 @@ package sqlparser
 
 import (
 	"fmt"
-	"github.com/brunowang/gframe/cmd/dao-gen/gen/helper"
-	"github.com/brunowang/gframe/cmd/dao-gen/gen/template"
 	"github.com/pingcap/tidb/parser"
 	"github.com/pingcap/tidb/parser/ast"
 	"github.com/pingcap/tidb/parser/test_driver"
 	"reflect"
+	"strings"
 )
 
 type ColumnDef struct {
@@ -23,6 +22,7 @@ type IndexDef struct {
 
 type TableDef struct {
 	Name    string
+	Stmt    string
 	Cols    []ColumnDef
 	Idxs    []IndexDef
 	allType map[string]struct{}
@@ -66,44 +66,26 @@ func (v *TableDef) Leave(in ast.Node) (ast.Node, bool) {
 	return in, true
 }
 
-func ParseTable(sql string) ([]*template.StructDefTmpl, error) {
+func ParseTable(sql string) ([]TableDef, error) {
 	p := parser.New()
 	stmtNodes, _, err := p.Parse(sql, "", "")
 	if err != nil {
 		return nil, err
 	}
-	tpls := make([]*template.StructDefTmpl, 0, len(stmtNodes))
+	tabs := make([]TableDef, 0, len(stmtNodes))
 	for _, stmt := range stmtNodes {
-		tab := &TableDef{allType: make(map[string]struct{})}
-		stmt.Accept(tab)
-		tpl := &template.StructDefTmpl{
-			Name:    helper.ToCamelCase(tab.Name),
-			TabName: tab.Name,
+		if _, ok := stmt.(*ast.CreateTableStmt); !ok {
+			continue
 		}
-		for _, col := range tab.Cols {
-			tpl.Fields = append(tpl.Fields, template.Field{
-				Name:    helper.ToCamelCase(col.Name),
-				Type:    col.Type,
-				ColName: col.Name,
-				Comment: col.Comment,
-			})
+		tab := TableDef{
+			Stmt:    strings.TrimSpace(stmt.Text()),
+			allType: make(map[string]struct{}),
 		}
-		for _, idx := range tab.Idxs {
-			fields := make([]template.Field, 0, len(idx.Cols))
-			for _, col := range idx.Cols {
-				field, err := tpl.Fields.Find(helper.ToCamelCase(col))
-				if err != nil {
-					return nil, err
-				}
-				field.Name = helper.UnTitle(field.Name)
-				fields = append(fields, field)
-			}
-			tpl.Indexes = append(tpl.Indexes, template.Index{
-				Uniq: idx.Uniq,
-				Cols: fields,
-			})
+		if !strings.HasSuffix(tab.Stmt, ";") {
+			tab.Stmt += ";"
 		}
-		tpls = append(tpls, tpl)
+		stmt.Accept(&tab)
+		tabs = append(tabs, tab)
 	}
-	return tpls, nil
+	return tabs, nil
 }
