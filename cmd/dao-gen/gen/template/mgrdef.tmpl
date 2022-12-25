@@ -3,16 +3,19 @@ package dao
 import (
 	"context"
 	"errors"
+	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
 
 var (
-	DuplicateKey = errors.New("duplicate key")
+	TableExists    = errors.New("table already exists")
+	DuplicateKey   = errors.New("duplicate entry key")
+	RecordNotFound = errors.New("record not found")
 )
 
 type Dao struct {
-    dsn string
+	dsn string
 	db  *sqlx.DB
 {{- range .Stmts}}
 	{{.Name}} *{{.Name}}Dao
@@ -38,6 +41,9 @@ func (d *Dao) Init() error {
 {{- end}}
 
 	if err := d.EnsureTableExist(); err != nil {
+		if e, ok := err.(*mysql.MySQLError); ok && e.Number == 1050 {
+			return TableExists
+		}
 		return err
 	}
 
