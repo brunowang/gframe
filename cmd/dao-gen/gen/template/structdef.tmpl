@@ -11,9 +11,19 @@ import (
 
 type {{.Name}} struct {
 	{{- range .Fields}}
-	{{.Name}} {{.Type}} `db:"{{.ColName}}"`{{if not (eq "" .Comment)}} // {{end}}{{.Comment}}
+	{{.Name}} *{{.Type}} `db:"{{.ColName}}"`{{if not (eq "" .Comment)}} // {{end}}{{.Comment}}
 	{{- end}}
 }
+
+{{- $table := .}}
+{{range .Fields}}
+func (m *{{$table.Name}}) Get{{.Name}}() {{.Type}} {
+	if m != nil && m.{{.Name}} != nil {
+		return *m.{{.Name}}
+	}
+	return {{.ZeroVal}}
+}
+{{end}}
 
 type {{.Name}}Dao struct {
 	db *sqlx.DB
@@ -36,7 +46,6 @@ func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64,
 	}
 	return res.LastInsertId()
 }
-{{$table := .}}
 {{range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Select{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (*{{$table.Name}}, error) {
 	var one {{$table.Name}}

@@ -9,6 +9,7 @@ import (
 type Field struct {
 	Name    string
 	Type    string
+	ZeroVal string
 	ColName string
 	Comment string
 }

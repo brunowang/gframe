@@ -12,6 +12,7 @@ import (
 type ColumnDef struct {
 	Name    string
 	Type    string
+	ZeroVal string
 	Comment string
 }
 
@@ -34,8 +35,9 @@ func (v *TableDef) Enter(in ast.Node) (ast.Node, bool) {
 		v.Name = node.Name.O
 	case *ast.ColumnDef:
 		col := ColumnDef{
-			Name: node.Name.Name.O,
-			Type: typeMap[node.Tp.GetType()],
+			Name:    node.Name.Name.O,
+			Type:    typeMap.GetType(node.Tp.GetType()),
+			ZeroVal: typeMap.GetZeroVal(node.Tp.GetType()),
 		}
 		for _, o := range node.Options {
 			if o.Tp == ast.ColumnOptionComment {
