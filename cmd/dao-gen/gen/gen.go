@@ -49,6 +49,7 @@ func GenerateCURD(tab sqlparser.TableDef) error {
 		tpl.Fields = append(tpl.Fields, template.Field{
 			Name:    helper.ToCamelCase(col.Name),
 			Type:    col.Type,
+			ZeroVal: col.ZeroVal,
 			ColName: col.Name,
 			Comment: col.Comment,
 		})
@@ -61,6 +62,7 @@ func GenerateCURD(tab sqlparser.TableDef) error {
 				field = template.Field{
 					Name:    "<unknown>",
 					Type:    "<unknown>",
+					ZeroVal: "<unknown>",
 					ColName: "<unknown>",
 				}
 			}
