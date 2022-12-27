@@ -31,8 +31,14 @@ func main() {
 	}
 
 	for _, tab := range tabs {
+		if err := gen.GenerateModel(tab); err != nil {
+			log.Fatalf("generate model failed, err: %v", err)
+		}
 		if err := gen.GenerateCURD(tab); err != nil {
 			log.Fatalf("generate curd failed, err: %v", err)
+		}
+		if err := gen.GenerateCache(tab); err != nil {
+			log.Fatalf("generate cache failed, err: %v", err)
 		}
 	}
 }
