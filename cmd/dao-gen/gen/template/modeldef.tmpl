@@ -1,0 +1,21 @@
+package dao
+
+import (
+	"time"
+)
+
+type {{.Name}} struct {
+	{{- range .Fields}}
+	{{.Name}} *{{.Type}} `db:"{{.ColName}}"`{{if not (eq "" .Comment)}} // {{end}}{{.Comment}}
+	{{- end}}
+}
+
+{{- $table := .}}
+{{range .Fields}}
+func (m *{{$table.Name}}) Get{{.Name}}() {{.Type}} {
+	if m != nil && m.{{.Name}} != nil {
+		return *m.{{.Name}}
+	}
+	return {{.ZeroVal}}
+}
+{{end}}

@@ -36,5 +36,9 @@ func (r *TmplRenderer) RenderTmpl() string {
 	if err := tmpl.ExecuteTemplate(buf, r.name, r.data); err != nil {
 		return fmt.Errorf("render template failed %v", err).Error()
 	}
-	return buf.String()
+	str := buf.String()
+	if strings.HasSuffix(str, "\n") {
+		return str
+	}
+	return str + "\n"
 }

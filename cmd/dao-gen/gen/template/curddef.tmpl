@@ -1,0 +1,94 @@
+package dao
+
+import (
+	"context"
+	stdsql "database/sql"
+	"fmt"
+	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+)
+
+type {{.Name}}Dao struct {
+	db    *sqlx.DB
+	cache *RedisCache
+}
+
+func New{{.Name}}Dao(db *sqlx.DB) *{{.Name}}Dao {
+	return &{{.Name}}Dao{db: db}
+}
+
+func (d *{{.Name}}Dao) WithCache(cache *RedisCache) *{{.Name}}Dao {
+	d.cache = cache
+	return d
+}
+{{$table := .}}
+func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64, error) {
+	cols := "{{range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}{{.ColName}}{{end}}"
+	sql := fmt.Sprintf("insert into {{.TabName}}(%s) values({{range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}?{{end}})", cols)
+	args := []interface{}{ {{- range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end -}} }
+	res, err := d.db.ExecContext(ctx, sql, args...)
+	if err != nil {
+		if e, ok := err.(*mysql.MySQLError); ok && e.Number == 1062 {
+			return 0, DuplicateKey
+		}
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+{{range $i, $v := .Indexes}}{{if $v.Uniq}}
+func (d *{{$table.Name}}Dao) Take{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (*{{$table.Name}}, error) {
+	one := &{{$table.Name}}{}
+	key := fmt.Sprintf("{{$table.TabName}}{{range .Cols}}.%v{{end}}"{{range .Cols}}, {{.Name}}{{end}})
+	if d.cache != nil {
+		if err := d.cache.GetCache(key, one); err == nil {
+			return one, nil
+		} else if err == RecordNotFound {
+			return nil, err
+		}
+	}
+	var err error
+	one, err = d.Select{{$table.Name}}{{$i}}(ctx{{range .Cols}}, {{.Name}}{{end}})
+	if err != nil {
+		return nil, err
+	}
+	if d.cache != nil {
+		_ = d.cache.SetCache(key, one)
+	}
+	return one, nil
+}
+
+func (d *{{$table.Name}}Dao) Select{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (*{{$table.Name}}, error) {
+	var one {{$table.Name}}
+	sql := "select * from {{$table.TabName}} where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}} limit 1"
+	if err := d.db.GetContext(ctx, &one, sql{{range .Cols}}, {{.Name}}{{end}}); err != nil {
+		if err == stdsql.ErrNoRows {
+			return nil, RecordNotFound
+		}
+		return nil, err
+	}
+	return &one, nil
+}
+{{end}}{{end}}
+{{range $i, $v := .Indexes}}{{if $v.Uniq}}
+func (d *{{$table.Name}}Dao) Update{{$table.Name}}{{$i}}(ctx context.Context, m {{$table.Name}}{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
+	cols := "{{range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}{{.ColName}}=?{{end}}"
+	args := []interface{}{ {{- range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end -}} }
+	args = append(args{{- range .Cols}}, {{.Name}}{{end -}})
+	sql := fmt.Sprintf("update {{$table.TabName}} set %s where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}", cols)
+	res, err := d.db.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+{{end}}{{end}}
+{{range $i, $v := .Indexes}}{{if $v.Uniq}}
+func (d *{{$table.Name}}Dao) Delete{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
+	sql := "delete from {{$table.TabName}} where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}"
+	res, err := d.db.ExecContext(ctx, sql{{range .Cols}}, {{.Name}}{{end}})
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+{{end}}{{end}}

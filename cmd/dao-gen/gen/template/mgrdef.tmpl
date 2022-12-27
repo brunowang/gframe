@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"errors"
+	"github.com/go-redis/redis/v7"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"time"
@@ -12,10 +13,16 @@ var (
 	TableExists    = errors.New("table already exists")
 	DuplicateKey   = errors.New("duplicate entry key")
 	RecordNotFound = errors.New("record not found")
+	CacheNotFound  = errors.New("cache not found")
 )
 
+type Config struct {
+	sqlDSN string
+	rdsOpt *redis.Options
+}
+
 type Dao struct {
-	dsn string
+	cfg Config
 	db  *sqlx.DB
 {{- range .Stmts}}
 	{{.Name}} *{{.Name}}Dao
@@ -23,11 +30,18 @@ type Dao struct {
 }
 
 func NewDao(dsn string) *Dao {
-	return &Dao{dsn: dsn}
+	return &Dao{
+		cfg: Config{sqlDSN: dsn},
+	}
+}
+
+func (d *Dao) UseCache(opt *redis.Options) *Dao {
+	d.cfg.rdsOpt = opt
+	return d
 }
 
 func (d *Dao) Init() error {
-	db, err := sqlx.Connect("mysql", d.dsn)
+	db, err := sqlx.Connect("mysql", d.cfg.sqlDSN)
 	if err != nil {
 		return err
 	}
@@ -39,6 +53,14 @@ func (d *Dao) Init() error {
 {{range .Stmts}}
 	d.{{.Name}} = New{{.Name}}Dao(db)
 {{- end}}
+
+	if d.cfg.rdsOpt != nil {
+		cli := redis.NewClient(d.cfg.rdsOpt)
+		cache := NewRedisCache(cli)
+{{range .Stmts}}
+		d.{{.Name}}.WithCache(cache)
+{{- end}}
+	}
 
 	if err := d.EnsureTableExist(); err != nil {
 		if e, ok := err.(*mysql.MySQLError); ok && e.Number == 1050 {

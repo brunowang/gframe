@@ -33,17 +33,16 @@ func GenerateDAO(tabs []sqlparser.TableDef) error {
 	if err != nil {
 		return err
 	}
-	_, err = f.WriteString(tpl.Render() + "\n")
+	_, err = f.WriteString(tpl.Render())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func GenerateCURD(tab sqlparser.TableDef) error {
-	tpl := &template.StructDefTmpl{
-		Name:    helper.ToCamelCase(tab.Name),
-		TabName: tab.Name,
+func GenerateModel(tab sqlparser.TableDef) error {
+	tpl := &template.ModelDefTmpl{
+		Name: helper.ToCamelCase(tab.Name),
 	}
 	for _, col := range tab.Cols {
 		tpl.Fields = append(tpl.Fields, template.Field{
@@ -54,6 +53,29 @@ func GenerateCURD(tab sqlparser.TableDef) error {
 			Comment: col.Comment,
 		})
 	}
+	f, err := os.Create(tab.Name + ".go")
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString(tpl.Render())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GenerateCURD(tab sqlparser.TableDef) error {
+	tpl := &template.CurdDefTmpl{
+		Name:    helper.ToCamelCase(tab.Name),
+		TabName: tab.Name,
+	}
+	for _, col := range tab.Cols {
+		tpl.Fields = append(tpl.Fields, template.Field{
+			Name:    helper.ToCamelCase(col.Name),
+			Type:    col.Type,
+			ColName: col.Name,
+		})
+	}
 	for _, idx := range tab.Idxs {
 		fields := make([]template.Field, 0, len(idx.Cols))
 		for _, col := range idx.Cols {
@@ -62,7 +84,6 @@ func GenerateCURD(tab sqlparser.TableDef) error {
 				field = template.Field{
 					Name:    "<unknown>",
 					Type:    "<unknown>",
-					ZeroVal: "<unknown>",
 					ColName: "<unknown>",
 				}
 			}
@@ -74,7 +95,20 @@ func GenerateCURD(tab sqlparser.TableDef) error {
 			Cols: fields,
 		})
 	}
-	f, err := os.Create(tpl.TabName + ".go")
+	f, err := os.Create(tpl.TabName + "_dao.go")
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString(tpl.Render())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GenerateCache(tab sqlparser.TableDef) error {
+	tpl := &template.CacheDefTmpl{}
+	f, err := os.Create("cache.go")
 	if err != nil {
 		return err
 	}
