@@ -48,7 +48,9 @@ func (d *{{$table.Name}}Dao) Take{{$table.Name}}{{$i}}(ctx context.Context{{rang
 	}
 	var err error
 	one, err = d.Select{{$table.Name}}{{$i}}(ctx{{range .Cols}}, {{.Name}}{{end}})
-	if err != nil {
+	if err == RecordNotFound && d.cache != nil {
+		_ = d.cache.SetCache(key, nil)
+	} else if err != nil {
 		return nil, err
 	}
 	if d.cache != nil {
