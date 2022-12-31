@@ -10,14 +10,14 @@ import (
 
 type {{.Name}}Dao struct {
 	db    *sqlx.DB
-	cache *RedisCache
+	cache Cache
 }
 
 func New{{.Name}}Dao(db *sqlx.DB) *{{.Name}}Dao {
 	return &{{.Name}}Dao{db: db}
 }
 
-func (d *{{.Name}}Dao) WithCache(cache *RedisCache) *{{.Name}}Dao {
+func (d *{{.Name}}Dao) WithCache(cache Cache) *{{.Name}}Dao {
 	d.cache = cache
 	return d
 }

@@ -15,4 +15,4 @@ dao-gen
   go install github.com/brunowang/gframe/cmd/dao-gen@latest
 
 使用：
-  mkdir dao && cd dao && dao-gen -f ../create_table.sql
+  dao-gen -f create_table.sql

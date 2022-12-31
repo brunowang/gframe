@@ -4,7 +4,6 @@ import (
 	"github.com/brunowang/gframe/cmd/dao-gen/gen/helper"
 	"github.com/brunowang/gframe/cmd/dao-gen/gen/sqlparser"
 	"github.com/brunowang/gframe/cmd/dao-gen/gen/template"
-	"os"
 	"strings"
 )
 
@@ -20,7 +19,7 @@ func GenerateDAO(tabs []sqlparser.TableDef) error {
 		}
 		tpl.Stmts = append(tpl.Stmts, stmt)
 	}
-	f, err := os.Create("tbl.go")
+	f, err := helper.CreateFile("dao/tbl.go")
 	if err != nil {
 		return err
 	}
@@ -29,7 +28,7 @@ func GenerateDAO(tabs []sqlparser.TableDef) error {
 		return err
 	}
 
-	f, err = os.Create("dao.go")
+	f, err = helper.CreateFile("dao/dao.go")
 	if err != nil {
 		return err
 	}
@@ -53,7 +52,7 @@ func GenerateModel(tab sqlparser.TableDef) error {
 			Comment: col.Comment,
 		})
 	}
-	f, err := os.Create(tab.Name + ".go")
+	f, err := helper.CreateFile("dao/" + tab.Name + ".go")
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,7 @@ func GenerateCURD(tab sqlparser.TableDef) error {
 			Cols: fields,
 		})
 	}
-	f, err := os.Create(tpl.TabName + "_dao.go")
+	f, err := helper.CreateFile("dao/" + tpl.TabName + "_dao.go")
 	if err != nil {
 		return err
 	}
@@ -108,13 +107,45 @@ func GenerateCURD(tab sqlparser.TableDef) error {
 
 func GenerateCache(tab sqlparser.TableDef) error {
 	tpl := &template.CacheDefTmpl{}
-	f, err := os.Create("cache.go")
-	if err != nil {
-		return err
+	{
+		f, err := helper.CreateFile("dao/cache_multi.go")
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(tpl.Render())
+		if err != nil {
+			return err
+		}
 	}
-	_, err = f.WriteString(tpl.Render())
-	if err != nil {
-		return err
+	{
+		f, err := helper.CreateFile("dao/cache_local.go")
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(tpl.RenderLocal())
+		if err != nil {
+			return err
+		}
+	}
+	{
+		f, err := helper.CreateFile("dao/cache_redis.go")
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(tpl.RenderRedis())
+		if err != nil {
+			return err
+		}
+	}
+	{
+		f, err := helper.CreateFile("dao/cache_serial.go")
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(tpl.RenderSerial())
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

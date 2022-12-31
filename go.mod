@@ -6,10 +6,8 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-redis/redis/v7 v7.4.1
-	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/jmoiron/sqlx v1.3.5
 	github.com/pingcap/tidb/parser v0.0.0-20221212075051-965ed00d663a
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	go.uber.org/zap v1.22.0

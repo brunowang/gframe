@@ -56,7 +56,9 @@ func (d *Dao) Init() error {
 
 	if d.cfg.rdsOpt != nil {
 		cli := redis.NewClient(d.cfg.rdsOpt)
-		cache := NewRedisCache(cli)
+		rds := NewRedisCache(cli).Timeout(2 * time.Minute)
+		loc := NewLocalCache(20 * time.Second)
+		cache := NewMultiCache(loc, rds)
 {{range .Stmts}}
 		d.{{.Name}}.WithCache(cache)
 {{- end}}

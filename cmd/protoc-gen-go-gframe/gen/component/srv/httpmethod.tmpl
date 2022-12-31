@@ -43,7 +43,7 @@ func (s *httpHandler) {{.Method}}(ctx *gin.Context) {
 		gfhttp.NewResp(ctx).Err(err)
 		return
 	}
-	gflog.Info(ctx, "httpHandler logical processing finished", zap.Duration("latency", time.Since(nowt)))
+	gflog.Info(ctx, "httpHandler {{.Method}} finished", zap.Duration("latency", time.Since(nowt)))
 
 	gfhttp.NewResp(ctx).OK(rsp.ToPb())
 }
@@ -88,7 +88,7 @@ sendLoop:
         }
     }
 
-    gflog.Info(ctx, "httpHandler sendLoop finished", zap.Duration("latency", time.Since(nowt)))
+    gflog.Info(ctx, "httpHandler {{.Method}} sendLoop finished", zap.Duration("latency", time.Since(nowt)))
 }
 {{else if and (.IsStreamingClient) (not .IsStreamingServer)}}
 func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
@@ -117,7 +117,7 @@ func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
             reqCh <- &req
         }
 
-        gflog.Info(ctx, "httpHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
+        gflog.Info(ctx, "httpHandler {{.Method}} recvLoop finished", zap.Duration("latency", time.Since(nowt)))
     }()
 	rsp, err := s.svc.{{.Method}}(ctx, reqCh)
 	if err != nil {
@@ -125,7 +125,7 @@ func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
 		lastErr = err
 		return
 	}
-	gflog.Info(ctx, "httpHandler logical processing finished", zap.Duration("latency", time.Since(nowt)))
+	gflog.Info(ctx, "httpHandler {{.Method}} finished", zap.Duration("latency", time.Since(nowt)))
 
 	if err := conn.WriteMessage(ws.TextMessage, rsp.ToJson()); err != nil {
         gflog.Error(ctx, "httpHandler conn.WriteMessage error", zap.Error(err))
@@ -160,7 +160,7 @@ func (s *httpHandler) {{.Method}}(gctx *gin.Context) {
             reqCh <- &req
         }
 
-        gflog.Info(ctx, "httpHandler recvLoop finished", zap.Duration("latency", time.Since(nowt)))
+        gflog.Info(ctx, "httpHandler {{.Method}} recvLoop finished", zap.Duration("latency", time.Since(nowt)))
     }()
 
     rspCh, err := s.svc.{{.Method}}(ctx, reqCh)
@@ -191,6 +191,6 @@ sendLoop:
         }
     }
 
-    gflog.Info(ctx, "httpHandler sendLoop finished", zap.Duration("latency", time.Since(nowt)))
+    gflog.Info(ctx, "httpHandler {{.Method}} sendLoop finished", zap.Duration("latency", time.Since(nowt)))
 }
 {{end}}

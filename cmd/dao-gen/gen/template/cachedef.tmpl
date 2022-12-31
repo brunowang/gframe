@@ -1,123 +1,54 @@
 package dao
 
-import (
-	"bytes"
-	"encoding/gob"
-	"encoding/json"
-	"errors"
-	"github.com/go-redis/redis/v7"
-	"time"
-)
-
-type RedisCache struct {
-	client  *redis.Client
-	timeout time.Duration
-	nilFlag string
-	nilTime time.Duration
-	serial  Serializable
+type Cache interface {
+	GetCache(key string, data interface{}) error
+	SetCache(key string, data interface{}) error
+	DelCache(key string) error
 }
 
-func NewRedisCache(redis *redis.Client) *RedisCache {
-	if redis == nil {
-		panic(errors.New("got nil redis client"))
-	}
-	return &RedisCache{
-		client:  redis,
-		nilFlag: "<nil>",
-		nilTime: 2 * time.Second,
-		serial:  JsonSerializer{},
-	}
+type MultiCache struct {
+	caches []Cache
 }
 
-func (c *RedisCache) Timeout(timeout time.Duration) *RedisCache {
-	if timeout < 0 {
-		return c
-	}
-	c.timeout = timeout
+func NewMultiCache(caches ...Cache) *MultiCache {
+	return &MultiCache{caches: caches}
+}
+
+func (c *MultiCache) Append(cache Cache) *MultiCache {
+	c.caches = append(c.caches, cache)
 	return c
 }
 
-func (c *RedisCache) NilFlag(nilFlag string) *RedisCache {
-	if nilFlag == "" {
-		return c
+func (c *MultiCache) GetCache(key string, data interface{}) error {
+	for i, cache := range c.caches {
+		if err := cache.GetCache(key, data); err == nil {
+			if i > 0 {
+				_ = c.caches[i-1].SetCache(key, data)
+			}
+			return nil
+		} else if err == RecordNotFound {
+			if i > 0 {
+				_ = c.caches[i-1].SetCache(key, nil)
+			}
+			return RecordNotFound
+		}
 	}
-	c.nilFlag = nilFlag
-	return c
+	return CacheNotFound
 }
 
-func (c *RedisCache) NilTime(nilTime time.Duration) *RedisCache {
-	if nilTime <= 0 {
-		return c
+func (c *MultiCache) SetCache(key string, data interface{}) error {
+	length := len(c.caches)
+	if length == 0 {
+		return nil
 	}
-	c.nilTime = nilTime
-	return c
+	return c.caches[length-1].SetCache(key, data)
 }
 
-func (c *RedisCache) Serial(serial Serializable) *RedisCache {
-	if serial == nil {
-		return c
-	}
-	c.serial = serial
-	return c
-}
-
-func (c *RedisCache) GetCache(key string, data interface{}) error {
-	val, err := c.client.Get(key).Bytes()
-	if err == redis.Nil {
-		return CacheNotFound
-	} else if err != nil {
-		return err
-	} else if string(val) == c.nilFlag {
-		return RecordNotFound
-	}
-	return c.serial.Deserialize(val, data)
-}
-
-func (c *RedisCache) SetCache(key string, data interface{}) error {
-	val, tmout := []byte(c.nilFlag), c.nilTime
-	if data != nil {
-		var err error
-		val, err = c.serial.Serialize(data)
-		if err != nil {
+func (c *MultiCache) DelCache(key string) error {
+	for _, cache := range c.caches {
+		if err := cache.DelCache(key); err != nil {
 			return err
 		}
-		tmout = c.timeout
 	}
-	return c.client.Set(key, val, tmout).Err()
-}
-
-func (c *RedisCache) DelCache(key string) error {
-	return c.client.Del(key).Err()
-}
-
-// Serializable 接口函数
-type Serializable interface {
-	Serialize(val interface{}) ([]byte, error)
-	Deserialize(raw []byte, val interface{}) error
-}
-
-type JsonSerializer struct{}
-
-func (JsonSerializer) Serialize(val interface{}) ([]byte, error) {
-	return json.Marshal(val)
-}
-
-func (JsonSerializer) Deserialize(raw []byte, val interface{}) error {
-	return json.Unmarshal(raw, val)
-}
-
-type GobSerializer struct{}
-
-func (GobSerializer) Serialize(val interface{}) ([]byte, error) {
-	buff := &bytes.Buffer{}
-	enc := gob.NewEncoder(buff)
-	err := enc.Encode(val)
-	return buff.Bytes(), err
-}
-
-func (GobSerializer) Deserialize(raw []byte, val interface{}) error {
-	buff := bytes.NewReader(raw)
-	dec := gob.NewDecoder(buff)
-	err := dec.Decode(val)
-	return err
+	return nil
 }
