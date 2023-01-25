@@ -28,6 +28,11 @@ func (c *LocalCache) Serial(serial Serializable) *LocalCache {
 	return c
 }
 
+func (c *LocalCache) HasCache(key string) bool {
+	_, err := c.memory.Get(key)
+	return err == nil
+}
+
 func (c *LocalCache) GetCache(key string, data interface{}) error {
 	val, err := c.memory.Get(key)
 	if err == bigcache.ErrEntryNotFound {

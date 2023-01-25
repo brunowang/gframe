@@ -58,6 +58,10 @@ func (c *RedisCache) Serial(serial Serializable) *RedisCache {
 	return c
 }
 
+func (c *RedisCache) HasCache(key string) bool {
+	return c.client.Exists(key).Val() > 0
+}
+
 func (c *RedisCache) GetCache(key string, data interface{}) error {
 	val, err := c.client.Get(key).Bytes()
 	if err == redis.Nil {

@@ -8,6 +8,12 @@ import (
 
 // Serializable 接口函数
 type Serializable interface {
+	Serialize() ([]byte, error)
+	Deserialize(raw []byte) error
+}
+
+// Serializer 接口函数
+type Serializer interface {
 	Serialize(val interface{}) ([]byte, error)
 	Deserialize(raw []byte, val interface{}) error
 }
