@@ -11,7 +11,7 @@ type RedisCache struct {
 	timeout time.Duration
 	nilFlag string
 	nilTime time.Duration
-	serial  Serializable
+	serial  Serializer
 }
 
 func NewRedisCache(redis *redis.Client) *RedisCache {
@@ -50,7 +50,7 @@ func (c *RedisCache) NilTime(nilTime time.Duration) *RedisCache {
 	return c
 }
 
-func (c *RedisCache) Serial(serial Serializable) *RedisCache {
+func (c *RedisCache) Serial(serial Serializer) *RedisCache {
 	if serial == nil {
 		return c
 	}

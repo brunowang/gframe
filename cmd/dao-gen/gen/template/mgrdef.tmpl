@@ -95,3 +95,26 @@ func (d *Dao) Tx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	}
 	return tx.Commit()
 }
+
+func genSqlCols(m interface{}) ([]string, []interface{}) {
+	var cols []string
+	var args []interface{}
+	rval := reflect.ValueOf(m)
+	for i := 0; i < rval.NumField(); i++ {
+		vf := rval.Field(i)
+		if vf.Kind() == reflect.Ptr && vf.IsNil() {
+			continue
+		}
+		if !vf.CanInterface() {
+			continue
+		}
+		tf := rval.Type().Field(i)
+		fname := tf.Tag.Get("db")
+		if fname == "" {
+			fname = tf.Name
+		}
+		cols = append(cols, fname)
+		args = append(args, vf.Interface())
+	}
+	return cols, args
+}

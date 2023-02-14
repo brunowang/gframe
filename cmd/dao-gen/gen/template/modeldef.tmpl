@@ -19,3 +19,12 @@ func (m *{{$table.Name}}) Get{{.Name}}() {{.Type}} {
 	return {{.ZeroVal}}
 }
 {{end}}
+{{range .Fields}}
+func (m *{{$table.Name}}) Set{{.Name}}(v {{.Type}}) *{{$table.Name}} {
+	if m == nil {
+		return m
+	}
+	m.{{.Name}} = &v
+	return m
+}
+{{end}}

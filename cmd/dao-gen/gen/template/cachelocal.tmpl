@@ -8,7 +8,7 @@ import (
 
 type LocalCache struct {
 	memory *bigcache.BigCache
-	serial Serializable
+	serial Serializer
 }
 
 func NewLocalCache(timeout time.Duration) *LocalCache {
@@ -20,7 +20,7 @@ func NewLocalCache(timeout time.Duration) *LocalCache {
 	}
 }
 
-func (c *LocalCache) Serial(serial Serializable) *LocalCache {
+func (c *LocalCache) Serial(serial Serializer) *LocalCache {
 	if serial == nil {
 		return c
 	}

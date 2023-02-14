@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"strings"
 )
 
 type {{.Name}}Dao struct {
@@ -24,10 +23,9 @@ func (d *{{.Name}}Dao) WithCache(cache Cache) *{{.Name}}Dao {
 }
 {{$table := .}}
 func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64, error) {
-	cols, args := genSqlCols(m)
-		places := make([]string, len(cols))
-	sql := fmt.Sprintf("insert into {{.TabName}}(%s) values(?%s)",
-		strings.Join(cols, ","), strings.Join(places, ",?"))
+	cols := "{{range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}{{.ColName}}{{end}}"
+	sql := fmt.Sprintf("insert into {{.TabName}}(%s) values({{range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}?{{end}})", cols)
+	args := []interface{}{ {{- range $i, $v := .Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end -}} }
 	res, err := d.db.ExecContext(ctx, sql, args...)
 	if err != nil {
 		if e, ok := err.(*mysql.MySQLError); ok && e.Number == 1062 {
@@ -40,7 +38,7 @@ func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64,
 {{range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Take{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (*{{$table.Name}}, error) {
 	one := &{{$table.Name}}{}
-	key := fmt.Sprintf("{{$table.TabName}}{{range .Cols}}:%v{{end}}"{{range .Cols}}, {{.Name}}{{end}})
+	key := fmt.Sprintf("{{$table.TabName}}{{range .Cols}}.%v{{end}}"{{range .Cols}}, {{.Name}}{{end}})
 	if d.cache != nil {
 		if err := d.cache.GetCache(key, one); err == nil {
 			return one, nil
@@ -75,10 +73,10 @@ func (d *{{$table.Name}}Dao) Select{{$table.Name}}{{$i}}(ctx context.Context{{ra
 {{end}}{{end}}
 {{range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Update{{$table.Name}}{{$i}}(ctx context.Context, m {{$table.Name}}{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
-	cols, args := genSqlCols(m)
-	sql := fmt.Sprintf("update {{$table.TabName}} set %s=? where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}",
-		strings.Join(cols, "=?,"))
+	cols := "{{range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}{{.ColName}}=?{{end}}"
+	args := []interface{}{ {{- range $i, $v := $table.Fields}}{{if not (eq 0 $i)}}, {{end}}m.{{.Name}}{{end -}} }
 	args = append(args{{- range .Cols}}, {{.Name}}{{end -}})
+	sql := fmt.Sprintf("update {{$table.TabName}} set %s where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}", cols)
 	res, err := d.db.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return 0, err
