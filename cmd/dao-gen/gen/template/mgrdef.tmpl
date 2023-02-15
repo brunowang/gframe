@@ -98,9 +98,18 @@ func (d *Dao) Tx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 }
 
 func genSqlCols(m interface{}) ([]string, []interface{}) {
+	if m == nil {
+		return nil, nil
+	}
+	rval := reflect.ValueOf(m)
+	if rval.Kind() == reflect.Ptr {
+		if rval.IsNil() {
+			return nil, nil
+		}
+		rval = rval.Elem()
+	}
 	var cols []string
 	var args []interface{}
-	rval := reflect.ValueOf(m)
 	for i := 0; i < rval.NumField(); i++ {
 		vf := rval.Field(i)
 		if vf.Kind() == reflect.Ptr && vf.IsNil() {
