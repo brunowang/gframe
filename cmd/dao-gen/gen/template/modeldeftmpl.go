@@ -31,8 +31,9 @@ type Index struct {
 }
 
 type ModelDefTmpl struct {
-	Name   string
-	Fields Fields
+	Imports map[string]struct{}
+	Name    string
+	Fields  Fields
 }
 
 //go:embed modeldef.tmpl

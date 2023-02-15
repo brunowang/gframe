@@ -1,8 +1,10 @@
 package dao
 
-import (
-	"time"
-)
+{{if .Imports}}import ({{end}}
+{{- range $k, $v := .Imports}}
+	"{{$k}}"
+{{- end}}
+{{if .Imports}}){{end}}
 
 type {{.Name}} struct {
 	{{- range .Fields}}

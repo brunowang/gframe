@@ -43,7 +43,11 @@ func GenerateModel(tab sqlparser.TableDef) error {
 	tpl := &template.ModelDefTmpl{
 		Name: helper.ToCamelCase(tab.Name),
 	}
+	imports := make(map[string]struct{})
 	for _, col := range tab.Cols {
+		if col.Type == "time.Time" {
+			imports["time"] = struct{}{}
+		}
 		tpl.Fields = append(tpl.Fields, template.Field{
 			Name:    helper.ToCamelCase(col.Name),
 			Type:    col.Type,
@@ -52,6 +56,7 @@ func GenerateModel(tab sqlparser.TableDef) error {
 			Comment: col.Comment,
 		})
 	}
+	tpl.Imports = imports
 	f, err := helper.CreateFile("dao/" + tab.Name + ".go")
 	if err != nil {
 		return err
