@@ -98,18 +98,24 @@ func (d *Dao) Tx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 }
 
 func genSqlCols(m interface{}) ([]string, []interface{}) {
+	cols, args, _ := genSqlColsWithPlaces(m)
+	return cols, args
+}
+
+func genSqlColsWithPlaces(m interface{}) ([]string, []interface{}, []string) {
 	if m == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	rval := reflect.ValueOf(m)
 	if rval.Kind() == reflect.Ptr {
 		if rval.IsNil() {
-			return nil, nil
+			return nil, nil, nil
 		}
 		rval = rval.Elem()
 	}
 	var cols []string
 	var args []interface{}
+	var places []string
 	for i := 0; i < rval.NumField(); i++ {
 		vf := rval.Field(i)
 		if vf.Kind() == reflect.Ptr && vf.IsNil() {
@@ -125,6 +131,7 @@ func genSqlCols(m interface{}) ([]string, []interface{}) {
 		}
 		cols = append(cols, fname)
 		args = append(args, vf.Interface())
+		places = append(places, "?")
 	}
-	return cols, args
+	return cols, args, places
 }

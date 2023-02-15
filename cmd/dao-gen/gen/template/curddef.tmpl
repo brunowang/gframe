@@ -24,11 +24,19 @@ func (d *{{.Name}}Dao) WithCache(cache Cache) *{{.Name}}Dao {
 }
 {{$table := .}}
 func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64, error) {
+	return d.Insert{{.Name}}Tx(ctx, m, nil)
+}
+
+func (d *{{.Name}}Dao) Insert{{.Name}}Tx(ctx context.Context, m {{.Name}}, tx *sqlx.Tx) (int64, error) {
 	cols, args := genSqlCols(m)
-		places := make([]string, len(cols))
+	places := make([]string, len(cols))
 	sql := fmt.Sprintf("insert into {{.TabName}}(%s) values(?%s)",
 		strings.Join(cols, ","), strings.Join(places, ",?"))
-	res, err := d.db.ExecContext(ctx, sql, args...)
+	var db sqlx.ExecerContext = d.db
+	if tx != nil {
+		db = tx
+	}
+	res, err := db.ExecContext(ctx, sql, args...)
 	if err != nil {
 		if e, ok := err.(*mysql.MySQLError); ok && e.Number == 1062 {
 			return 0, DuplicateKey
@@ -37,7 +45,8 @@ func (d *{{.Name}}Dao) Insert{{.Name}}(ctx context.Context, m {{.Name}}) (int64,
 	}
 	return res.LastInsertId()
 }
-{{range $i, $v := .Indexes}}{{if $v.Uniq}}
+{{if true}}{{end}}
+{{- range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Take{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (*{{$table.Name}}, error) {
 	one := &{{$table.Name}}{}
 	key := fmt.Sprintf("{{$table.TabName}}{{range .Cols}}:%v{{end}}"{{range .Cols}}, {{.Name}}{{end}})
@@ -73,23 +82,39 @@ func (d *{{$table.Name}}Dao) Select{{$table.Name}}{{$i}}(ctx context.Context{{ra
 	return &one, nil
 }
 {{end}}{{end}}
-{{range $i, $v := .Indexes}}{{if $v.Uniq}}
+{{- range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Update{{$table.Name}}{{$i}}(ctx context.Context, m {{$table.Name}}{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
+	return d.Update{{$table.Name}}{{$i}}Tx(ctx, m{{range .Cols}}, {{.Name}}{{end}}, nil)
+}
+
+func (d *{{$table.Name}}Dao) Update{{$table.Name}}{{$i}}Tx(ctx context.Context, m {{$table.Name}}{{range .Cols}}, {{.Name}} {{.Type}}{{end}}, tx *sqlx.Tx) (int64, error) {
 	cols, args := genSqlCols(m)
 	sql := fmt.Sprintf("update {{$table.TabName}} set %s=? where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}",
 		strings.Join(cols, "=?,"))
 	args = append(args{{- range .Cols}}, {{.Name}}{{end -}})
-	res, err := d.db.ExecContext(ctx, sql, args...)
+	var db sqlx.ExecerContext = d.db
+	if tx != nil {
+		db = tx
+	}
+	res, err := db.ExecContext(ctx, sql, args...)
 	if err != nil {
 		return 0, err
 	}
 	return res.RowsAffected()
 }
 {{end}}{{end}}
-{{range $i, $v := .Indexes}}{{if $v.Uniq}}
+{{- range $i, $v := .Indexes}}{{if $v.Uniq}}
 func (d *{{$table.Name}}Dao) Delete{{$table.Name}}{{$i}}(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}) (int64, error) {
+	return d.Delete{{$table.Name}}{{$i}}Tx(ctx{{range .Cols}}, {{.Name}}{{end}}, nil)
+}
+
+func (d *{{$table.Name}}Dao) Delete{{$table.Name}}{{$i}}Tx(ctx context.Context{{range .Cols}}, {{.Name}} {{.Type}}{{end}}, tx *sqlx.Tx) (int64, error) {
 	sql := "delete from {{$table.TabName}} where {{range $i, $v := .Cols}}{{if not (eq 0 $i)}} and {{end}}{{.ColName}}=?{{end}}"
-	res, err := d.db.ExecContext(ctx, sql{{range .Cols}}, {{.Name}}{{end}})
+	var db sqlx.ExecerContext = d.db
+	if tx != nil {
+		db = tx
+	}
+	res, err := db.ExecContext(ctx, sql{{range .Cols}}, {{.Name}}{{end}})
 	if err != nil {
 		return 0, err
 	}
