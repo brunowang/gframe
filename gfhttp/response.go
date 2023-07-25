@@ -78,7 +78,7 @@ func (r *Resp) Err(err error) {
 		return
 	}
 	defer r.ctx.Error(err)
-	if e, ok := err.(gferr.ECode); ok {
+	if e, ok := err.(gferr.IError); ok {
 		r.Code(e.Code()).Msg(e.Msg()).Abort()
 		return
 	}
