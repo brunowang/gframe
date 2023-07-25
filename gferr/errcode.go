@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-type Error interface {
+type IError interface {
 	error
 	fmt.Stringer
 	Code() int64
 	Msg() string
-	Wrap(err error) Error
+	Wrap(err error) IError
 	Equal(err error) bool
 }
 
@@ -21,7 +21,7 @@ type ecode struct {
 	errs []error
 }
 
-func New(code int64, msg string, errs ...error) Error {
+func New(code int64, msg string, errs ...error) IError {
 	err := &ecode{
 		code: code,
 		msg:  msg,
@@ -59,7 +59,7 @@ func (e ecode) Msg() string {
 	return e.msg
 }
 
-func (e *ecode) Wrap(err error) Error {
+func (e *ecode) Wrap(err error) IError {
 	e.errs = append(e.errs, err)
 	return e
 }
@@ -68,18 +68,18 @@ func (e ecode) Equal(other error) bool {
 	if other == nil {
 		return false
 	}
-	err, ok := other.(Error)
+	err, ok := other.(IError)
 	if !ok {
 		return false
 	}
 	return e.Code() == err.Code()
 }
 
-type Timeout struct{ Error }
+type Timeout struct{ IError }
 
 func (Timeout) Timeout() bool   { return true }
 func (Timeout) Temporary() bool { return true }
 
-func NewTimeout(code int64, msg string, errs ...error) Error {
+func NewTimeout(code int64, msg string, errs ...error) IError {
 	return &Timeout{New(code, msg, errs...)}
 }

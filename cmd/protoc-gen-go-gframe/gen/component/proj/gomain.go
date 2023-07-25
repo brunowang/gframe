@@ -35,7 +35,7 @@ func (a *GoMain) Generate(config helper.GenerateConfig) {
 			Import(fdir + "/frontend").Import(fdir + "/conf").
 			Import("go.uber.org/zap")
 
-		fpath := fmt.Sprintf("%s/cmd/%s/%s.go", fdir, projName, a.name)
+		fpath := fmt.Sprintf("%s/%s.go", fdir, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
 		g.P(fhead)
 
