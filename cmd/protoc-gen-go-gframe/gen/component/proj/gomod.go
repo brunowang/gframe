@@ -1,10 +1,8 @@
 package proj
 
 import (
-	"fmt"
 	"github.com/brunowang/gframe/cmd/protoc-gen-go-gframe/gen/helper"
 	"google.golang.org/protobuf/compiler/protogen"
-	"strings"
 )
 
 type GoMod struct {
@@ -20,10 +18,7 @@ func (a *GoMod) Generate(config helper.GenerateConfig) {
 		if !file.Generate {
 			continue
 		}
-		projName := string(file.GoPackageName)
-
-		importDomain := strings.Split(string(file.GoImportPath), "/")[0]
-		fdir := fmt.Sprintf("%s/projects/%s", importDomain, projName)
+		fdir := helper.GetFileBaseDir(file, config)
 		fpath := fdir + "/go.mod"
 		pbGoDir := string(file.GoImportPath)
 		if config.PbGoDir != "" {
@@ -38,7 +33,7 @@ func (a *GoMod) Generate(config helper.GenerateConfig) {
 		g.P("require (")
 		g.P("\t" + pbGoDir + " latest")
 		g.P("\tgithub.com/brunowang/gframe latest")
-		g.P("\tgithub.com/gin-gonic/gin v1.7.2")
+		g.P("\tgithub.com/gin-gonic/gin v1.9.1")
 		g.P("\tgithub.com/golang/protobuf v1.5.2")
 		g.P("\tgithub.com/gorilla/websocket v1.4.2")
 		g.P("\tgithub.com/grpc-ecosystem/go-grpc-middleware v1.3.0")

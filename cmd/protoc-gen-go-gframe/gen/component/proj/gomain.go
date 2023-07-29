@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/brunowang/gframe/cmd/protoc-gen-go-gframe/gen/helper"
 	"google.golang.org/protobuf/compiler/protogen"
-	"strings"
 )
 
 type GoMain struct {
@@ -24,9 +23,8 @@ func (a *GoMain) Generate(config helper.GenerateConfig) {
 		if !file.Generate {
 			continue
 		}
-		importDomain := strings.Split(string(file.GoImportPath), "/")[0]
 		projName := string(file.GoPackageName)
-		fdir := fmt.Sprintf("%s/projects/%s", importDomain, projName)
+		fdir := helper.GetFileBaseDir(file, config)
 		fhead := helper.NewCodeHeader().Pkg(a.goPkg).
 			Import("gopkg.in/alecthomas/kingpin.v2").
 			Import("github.com/brunowang/gframe/gflog").

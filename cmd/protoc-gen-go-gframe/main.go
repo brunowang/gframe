@@ -13,8 +13,9 @@ func main() {
 	var flags flag.FlagSet
 	test := flags.Bool("test", false, "log and exit")
 	components := flags.String("components", "", "component name list, split by +")
-	project := flags.String("project", "unnamed", "specify project name, will use as go mod name")
+	project := flags.String("project", "unnamed", "specify project name, will use as go project name")
 	pbGoDir := flags.String("pbGoDir", "", "specify proto go code dir, will use for go mod require")
+	modPath := flags.String("modPath", "", "specify go module path, will use for go mod module")
 	options := protogen.Options{
 		ParamFunc: flags.Set,
 	}
@@ -42,6 +43,7 @@ func main() {
 			gen.WithComponents(components),
 			gen.WithProject(*project),
 			gen.WithPbGoDir(*pbGoDir),
+			gen.WithModPath(*modPath),
 		)
 		return nil
 	})

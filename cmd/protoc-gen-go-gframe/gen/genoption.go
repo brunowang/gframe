@@ -7,6 +7,7 @@ type (
 		components []string
 		project    string
 		pbGoDir    string
+		modPath    string
 	}
 )
 
@@ -32,6 +33,14 @@ func WithPbGoDir(pbGoDir string) Option {
 	return func(options *genOptions) {
 		if len(pbGoDir) > 0 {
 			options.pbGoDir = pbGoDir
+		}
+	}
+}
+
+func WithModPath(modPath string) Option {
+	return func(options *genOptions) {
+		if len(modPath) > 0 {
+			options.modPath = modPath
 		}
 	}
 }

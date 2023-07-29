@@ -1,11 +1,14 @@
 package helper
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"google.golang.org/protobuf/compiler/protogen"
 	"io"
 	"os"
+	"strings"
 )
 
 func Exists(path string) bool {
@@ -40,4 +43,13 @@ func ParseGoFile(filepath string) ([]byte, map[string]struct{}) {
 		}
 	}
 	return gosrc, fnMap
+}
+
+func GetFileBaseDir(file *protogen.File, config GenerateConfig) string {
+	if config.ModPath != "" {
+		return config.ModPath
+	}
+	projName := string(file.GoPackageName)
+	importDomain := strings.Split(string(file.GoImportPath), "/")[0]
+	return fmt.Sprintf("%s/projects/%s", importDomain, projName)
 }

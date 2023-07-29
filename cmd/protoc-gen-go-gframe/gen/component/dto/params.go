@@ -5,7 +5,6 @@ import (
 	"github.com/brunowang/gframe/cmd/protoc-gen-go-gframe/gen/helper"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"strings"
 )
 
 type Params struct {
@@ -30,9 +29,8 @@ func (a *Params) Generate(config helper.GenerateConfig) {
 			Import("github.com/golang/protobuf/jsonpb")
 		projName := string(file.GoPackageName)
 
-		importDomain := strings.Split(string(file.GoImportPath), "/")[0]
-		fpath := fmt.Sprintf("%s/projects/%s/%s/%s.go",
-			importDomain, projName, a.goPkg, a.name)
+		fdir := helper.GetFileBaseDir(file, config)
+		fpath := fmt.Sprintf("%s/%s/%s.go", fdir, a.goPkg, a.name)
 		g := a.plugin.NewGeneratedFile(fpath, file.GoImportPath)
 		g.P(fhead)
 		tmpl := ParamsTpl{

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/brunowang/gframe/cmd/protoc-gen-go-gframe/gen/helper"
 	"google.golang.org/protobuf/compiler/protogen"
-	"strings"
 )
 
 type Server struct {
@@ -24,9 +23,7 @@ func (a *Server) Generate(config helper.GenerateConfig) {
 		if !file.Generate {
 			continue
 		}
-		importDomain := strings.Split(string(file.GoImportPath), "/")[0]
-		projName := string(file.GoPackageName)
-		fdir := fmt.Sprintf("%s/projects/%s", importDomain, projName)
+		fdir := helper.GetFileBaseDir(file, config)
 		fhead := helper.NewCodeHeader().Pkg(a.goPkg).Import("fmt").
 			Import("net").Import("go.uber.org/zap").
 			Import("github.com/brunowang/gframe/gflog").

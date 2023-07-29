@@ -45,6 +45,7 @@ func (g *ProjectGenerator) initOnce(opts ...Option) {
 		g.config = helper.GenerateConfig{
 			Project: options.project,
 			PbGoDir: options.pbGoDir,
+			ModPath: options.modPath,
 		}
 	})
 }

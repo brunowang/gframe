@@ -22,9 +22,7 @@ func (a *Service) Generate(config helper.GenerateConfig) {
 		if !file.Generate {
 			continue
 		}
-		importDomain := strings.Split(string(file.GoImportPath), "/")[0]
-		projName := string(file.GoPackageName)
-		fdir := fmt.Sprintf("%s/projects/%s", importDomain, projName)
+		fdir := helper.GetFileBaseDir(file, config)
 		fhead := helper.NewCodeHeader().Pkg(a.goPkg).
 			Import(fdir + "/dto").Import("context")
 
