@@ -4,7 +4,7 @@ import (
 	"context"
 	stdsql "database/sql"
 	"fmt"
-	"github.com/brunowang/gframe/gfserial"
+	"github.com/brunowang/gframe/gfcache"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"strings"
@@ -12,14 +12,14 @@ import (
 
 type {{.Name}}Dao struct {
 	db    *sqlx.DB
-	cache gfserial.Cache
+	cache gfcache.Cache
 }
 
 func New{{.Name}}Dao(db *sqlx.DB) *{{.Name}}Dao {
 	return &{{.Name}}Dao{db: db}
 }
 
-func (d *{{.Name}}Dao) WithCache(cache gfserial.Cache) *{{.Name}}Dao {
+func (d *{{.Name}}Dao) WithCache(cache gfcache.Cache) *{{.Name}}Dao {
 	d.cache = cache
 	return d
 }
