@@ -31,10 +31,7 @@ func (m *{{.Name}}) Fill(pb *{{$proj}}.{{.Name}}) {
     if pb == nil {
         return
     }
-    m.{{.Name}} = {{$proj}}.{{.Name}}{
-        {{range .Fields}}{{.Name}}: pb.{{.Name}},
-        {{end}}
-    }
+    m.{{.Name}} = *pb
     return
 }
 {{end}}
