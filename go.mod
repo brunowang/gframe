@@ -4,11 +4,13 @@ go 1.18
 
 require (
 	github.com/alicebob/miniredis/v2 v2.30.4
+	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-redis/redis/v7 v7.4.1
 	github.com/golang/protobuf v1.5.2
+	github.com/gomodule/redigo v1.8.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/pingcap/tidb/parser v0.0.0-20221212075051-965ed00d663a
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b

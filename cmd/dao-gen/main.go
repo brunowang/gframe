@@ -37,8 +37,9 @@ func main() {
 		if err := gen.GenerateCURD(tab); err != nil {
 			log.Fatalf("generate curd failed, err: %v", err)
 		}
-		if err := gen.GenerateCache(tab); err != nil {
-			log.Fatalf("generate cache failed, err: %v", err)
-		}
+		// use gfcache package
+		//if err := gen.GenerateCache(tab); err != nil {
+		//	log.Fatalf("generate cache failed, err: %v", err)
+		//}
 	}
 }

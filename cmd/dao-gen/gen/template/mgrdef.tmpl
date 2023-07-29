@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"errors"
+	"github.com/brunowang/gframe/gfserial"
 	"github.com/go-redis/redis/v7"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -57,9 +58,9 @@ func (d *Dao) Init() error {
 
 	if d.cfg.rdsOpt != nil {
 		cli := redis.NewClient(d.cfg.rdsOpt)
-		rds := NewRedisCache(cli).Timeout(2 * time.Minute)
-		loc := NewLocalCache(20 * time.Second)
-		cache := NewMultiCache(loc, rds)
+		rds := gfserial.NewRedisCache(cli).Timeout(2 * time.Minute)
+		loc := gfserial.NewLocalCache(20 * time.Second)
+		cache := gfserial.NewMultiCache(loc, rds)
 {{range .Stmts}}
 		d.{{.Name}}.WithCache(cache)
 {{- end}}

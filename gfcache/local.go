@@ -1,0 +1,60 @@
+package cacheutil
+
+import (
+	"context"
+	"github.com/allegro/bigcache/v3"
+	"github.com/brunowang/gframe/gfserial"
+	"time"
+)
+
+type LocalCache struct {
+	memory *bigcache.BigCache
+	serial gfserial.Serializer
+}
+
+func NewLocalCache(timeout time.Duration) *LocalCache {
+	cfg := bigcache.DefaultConfig(timeout)
+	mem, _ := bigcache.New(context.Background(), cfg)
+	return &LocalCache{
+		memory: mem,
+		serial: gfserial.JsonSerializer{},
+	}
+}
+
+func (c *LocalCache) Serial(serial gfserial.Serializer) *LocalCache {
+	if serial == nil {
+		return c
+	}
+	c.serial = serial
+	return c
+}
+
+func (c *LocalCache) HasCache(key string) bool {
+	_, err := c.memory.Get(key)
+	return err == nil
+}
+
+func (c *LocalCache) GetCache(key string, data interface{}) error {
+	val, err := c.memory.Get(key)
+	if err == bigcache.ErrEntryNotFound {
+		return CacheNotFound
+	} else if err != nil {
+		return err
+	}
+	return c.serial.Deserialize(val, data)
+}
+
+func (c *LocalCache) SetCache(key string, data interface{}) error {
+	if data == nil {
+		return nil
+	}
+	val, err := c.serial.Serialize(data)
+	if err != nil {
+		return err
+	}
+	return c.memory.Set(key, val)
+}
+
+func (c *LocalCache) DelCache(key string) error {
+	return c.memory.Delete(key)
+}
