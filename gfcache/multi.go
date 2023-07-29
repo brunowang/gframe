@@ -1,4 +1,4 @@
-package cacheutil
+package gfcache
 
 type Cache interface {
 	HasCache(key string) bool
