@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/brunowang/gframe/cmd/dao-gen/gen"
 	"github.com/brunowang/gframe/cmd/dao-gen/gen/sqlparser"
-	_ "github.com/pingcap/tidb/parser/test_driver"
+	_ "github.com/pingcap/tidb/pkg/parser/test_driver"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"os"

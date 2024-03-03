@@ -1,6 +1,6 @@
 package sqlparser
 
-import "github.com/pingcap/tidb/parser/mysql"
+import "github.com/pingcap/tidb/pkg/parser/mysql"
 
 var typeMap = TypeMap{
 	mysql.TypeTiny:       {"int8", "0"},
