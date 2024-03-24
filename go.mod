@@ -12,6 +12,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gomodule/redigo v1.8.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/pingcap/tidb/pkg/parser v0.0.0-20240301133632-6dd47fe67123
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/stretchr/testify v1.8.4
