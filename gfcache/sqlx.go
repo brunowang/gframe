@@ -53,3 +53,7 @@ func (d *SqlxDB) Transact(ctx context.Context, txFn TransactFunc[*sqlx.Tx]) (ret
 	}
 	return nil
 }
+
+func (d *SqlxDB) SourceDB() SourceDB {
+	return d
+}

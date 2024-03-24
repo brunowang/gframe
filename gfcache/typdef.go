@@ -25,6 +25,7 @@ type SourceDB interface {
 
 type SourceDBTx[T Transaction] interface {
 	Transact(ctx context.Context, txFn TransactFunc[T]) error
+	SourceDB() SourceDB
 }
 
 type Transaction interface {

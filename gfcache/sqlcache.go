@@ -42,12 +42,12 @@ func (c *SqlCache) Execute(ctx context.Context, clearFn CacheClearFunc, query st
 }
 
 type SqlCacheTx[T Transaction] struct {
-	db    SourceDBTx[T]
-	cache Cache
+	SqlCache
+	db SourceDBTx[T]
 }
 
 func NewSqlCacheTx[T Transaction](db SourceDBTx[T], cache Cache) *SqlCacheTx[T] {
-	return &SqlCacheTx[T]{db: db, cache: cache}
+	return &SqlCacheTx[T]{db: db, SqlCache: SqlCache{db: db.SourceDB(), cache: cache}}
 }
 
 func (c *SqlCacheTx[T]) Transact(ctx context.Context, clearFn CacheClearFunc, txFn TransactFunc[T]) error {
