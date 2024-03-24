@@ -6,7 +6,8 @@ import (
 )
 
 type (
-	CacheClearFunc func(cache Cache) error
+	CacheClearFunc              func(cache Cache) error
+	TransactFunc[T Transaction] func(tx T) error
 )
 
 type SqlCache struct {
@@ -38,4 +39,25 @@ func (c *SqlCache) Execute(ctx context.Context, clearFn CacheClearFunc, query st
 		return nil, err
 	}
 	return res, nil
+}
+
+type SqlCacheTx[T Transaction] struct {
+	db    SourceDBTx[T]
+	cache Cache
+}
+
+func NewSqlCacheTx[T Transaction](db SourceDBTx[T], cache Cache) *SqlCacheTx[T] {
+	return &SqlCacheTx[T]{db: db, cache: cache}
+}
+
+func (c *SqlCacheTx[T]) Transact(ctx context.Context, clearFn CacheClearFunc, txFn TransactFunc[T]) error {
+	if err := c.db.Transact(ctx, func(tx T) error {
+		return txFn(tx)
+	}); err != nil {
+		return err
+	}
+	if err := clearFn(c.cache); err != nil {
+		return err
+	}
+	return nil
 }

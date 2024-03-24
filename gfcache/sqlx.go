@@ -7,10 +7,6 @@ import (
 	"reflect"
 )
 
-type (
-	TransactFunc func(tx *sqlx.Tx) error
-)
-
 type SqlxDB struct {
 	db *sqlx.DB
 }
@@ -40,7 +36,7 @@ func (d *SqlxDB) Execute(ctx context.Context, query string, args ...interface{})
 	return d.db.ExecContext(ctx, query, args...)
 }
 
-func (d *SqlxDB) Transact(ctx context.Context, txFns ...TransactFunc) (retErr error) {
+func (d *SqlxDB) Transact(ctx context.Context, txFn TransactFunc[*sqlx.Tx]) (retErr error) {
 	tx, err := d.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -52,11 +48,8 @@ func (d *SqlxDB) Transact(ctx context.Context, txFns ...TransactFunc) (retErr er
 		}
 		retErr = tx.Commit()
 	}()
-
-	for _, fn := range txFns {
-		if err := fn(tx); err != nil {
-			return err
-		}
+	if err := txFn(tx); err != nil {
+		return err
 	}
 	return nil
 }
