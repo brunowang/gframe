@@ -3,9 +3,11 @@ package gfcache
 import (
 	"context"
 	"database/sql"
+	"github.com/brunowang/gframe/gferr"
 )
 
 type (
+	CacheGetSetFunc             func(cache Cache, dest interface{}) error
 	CacheClearFunc              func(cache Cache) error
 	TransactFunc[T Transaction] func(tx T) error
 )
@@ -30,15 +32,37 @@ func (c *SqlCache) Query(ctx context.Context, cacheKey string, dest interface{},
 	return nil
 }
 
-func (c *SqlCache) Execute(ctx context.Context, clearFn CacheClearFunc, query string, args ...interface{}) (sql.Result, error) {
+func (c *SqlCache) QueryWithFunc(ctx context.Context, getFn, setFn CacheGetSetFunc, dest interface{}, query string, args ...interface{}) error {
+	if err := getFn(c.cache, dest); err == nil {
+		return nil
+	}
+	if err := c.db.Query(ctx, dest, query, args...); err != nil {
+		return err
+	}
+	_ = setFn(c.cache, dest)
+	return nil
+}
+
+func (c *SqlCache) Execute(ctx context.Context, clearKeys []string, query string, args ...interface{}) (sql.Result, error) {
 	res, err := c.db.Execute(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
-	if err := clearFn(c.cache); err != nil {
+	var errs gferr.MultiError
+	for _, clearKey := range clearKeys {
+		if err := c.cache.DelCache(clearKey); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return res, errs.Unwrap()
+}
+
+func (c *SqlCache) ExecuteWithFunc(ctx context.Context, clearFn CacheClearFunc, query string, args ...interface{}) (sql.Result, error) {
+	res, err := c.db.Execute(ctx, query, args...)
+	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	return res, clearFn(c.cache)
 }
 
 type SqlCacheTx[T Transaction] struct {
