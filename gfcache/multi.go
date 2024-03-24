@@ -1,12 +1,5 @@
 package gfcache
 
-type Cache interface {
-	HasCache(key string) bool
-	GetCache(key string, data interface{}) error
-	SetCache(key string, data interface{}) error
-	DelCache(key string) error
-}
-
 type MultiCache struct {
 	caches []Cache
 }
