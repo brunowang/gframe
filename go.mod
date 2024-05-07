@@ -1,10 +1,13 @@
 module github.com/brunowang/gframe
 
-go 1.18
+go 1.21
+
+toolchain go1.22.2
 
 require (
 	github.com/alicebob/miniredis/v2 v2.30.4
 	github.com/allegro/bigcache/v3 v3.1.0
+	github.com/aws/aws-sdk-go v1.52.3
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/fatih/structs v1.1.0
 	github.com/gin-gonic/gin v1.8.1
@@ -48,6 +51,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
