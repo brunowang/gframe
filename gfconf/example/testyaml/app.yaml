@@ -1,0 +1,10 @@
+app:
+  mode : dev
+  port : 8081
+
+log:                # 日志配置
+  filename: ./app.log
+  maxSize: 100      # 日志文件的最大大小(兆)
+  maxBackups: 10    # 保留旧文件的最大个数
+  maxAge: 5         # 保留旧文件的最大天数
+  level: -1         # 日志级别 @see zap log level
