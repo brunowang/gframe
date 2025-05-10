@@ -22,10 +22,12 @@ type S3Mgr struct {
 }
 
 type AwsS3Config struct {
-	AccessKey string `toml:"ak"`
-	SecretKey string `toml:"sk"`
-	Endpoint  string `toml:"endpoint"`
-	Region    string `toml:"region"`
+	AccessKey        string `toml:"ak"`
+	SecretKey        string `toml:"sk"`
+	Endpoint         string `toml:"endpoint"`
+	Region           string `toml:"region"`
+	EnableSSL        bool   `toml:"enable_ssl"`
+	VirtualHostStyle bool   `toml:"virtual_host_style"`
 }
 
 func NewS3Mgr(c AwsS3Config) *S3Mgr {
@@ -33,8 +35,8 @@ func NewS3Mgr(c AwsS3Config) *S3Mgr {
 		Credentials:      credentials.NewStaticCredentials(c.AccessKey, c.SecretKey, ""),
 		Endpoint:         aws.String(c.Endpoint),
 		Region:           aws.String(c.Region),
-		DisableSSL:       aws.Bool(true),
-		S3ForcePathStyle: aws.Bool(true),
+		DisableSSL:       aws.Bool(!c.EnableSSL),
+		S3ForcePathStyle: aws.Bool(!c.VirtualHostStyle),
 	}}
 }
 
