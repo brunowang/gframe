@@ -7,7 +7,7 @@ import (
 	"github.com/brunowang/gframe/gflog"
 	"github.com/brunowang/gframe/gfserial"
 	"github.com/fatih/structs"
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"reflect"
 	"time"

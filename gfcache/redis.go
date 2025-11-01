@@ -1,9 +1,10 @@
 package gfcache
 
 import (
+	"context"
 	"errors"
 	"github.com/brunowang/gframe/gfserial"
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 	"time"
 )
 
@@ -60,11 +61,11 @@ func (c *RedisCache) Serial(serial gfserial.Serializer) *RedisCache {
 }
 
 func (c *RedisCache) HasCache(key string) bool {
-	return c.client.Exists(key).Val() > 0
+	return c.client.Exists(context.TODO(), key).Val() > 0
 }
 
 func (c *RedisCache) GetCache(key string, data interface{}) error {
-	val, err := c.client.Get(key).Bytes()
+	val, err := c.client.Get(context.TODO(), key).Bytes()
 	if err == redis.Nil {
 		return CacheNotFound
 	} else if err != nil {
@@ -85,9 +86,9 @@ func (c *RedisCache) SetCache(key string, data interface{}) error {
 		}
 		tmout = c.timeout
 	}
-	return c.client.Set(key, val, tmout).Err()
+	return c.client.Set(context.TODO(), key, val, tmout).Err()
 }
 
 func (c *RedisCache) DelCache(key string) error {
-	return c.client.Del(key).Err()
+	return c.client.Del(context.TODO(), key).Err()
 }

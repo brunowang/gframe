@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/brunowang/gframe/gflog"
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 

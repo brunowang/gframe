@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/alicebob/miniredis/v2"
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/atomic"
 	"testing"

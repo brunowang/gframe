@@ -2,12 +2,12 @@ package gfid
 
 import (
 	"github.com/bwmarrin/snowflake"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"math/rand"
 )
 
 func GenUUID() string {
-	v4, err := uuid.NewV4()
+	v4, err := uuid.NewV7()
 	if err != nil {
 		// unexpect error
 		panic(err)
